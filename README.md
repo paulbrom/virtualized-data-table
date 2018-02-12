@@ -4,10 +4,13 @@
   <a href="https://github.com/paulbrom/virtualized-data-table">
     <img src="https://raw.githubusercontent.com/paulbrom/virtualized-data-table/master/assets/virtualized-data-table-logo.png">
   </a>
-  <h3><i>A flexible, performant table for <a href="https://reactjs.org/">React</a></i></h3>
-  <h4>
-    <p>&nbsp;</p>
-  </h4>
+  <h3>
+    <i>
+      A flexible, customizable, high-performance table for
+      <a href="https://reactjs.org/">React</a> based on Facebook's
+      <a href="https://github.com/facebookarchive/fixed-data-table">Fixed Data Table</a>
+    </i>
+  </h3>
 </div>
 
 ## Basic Usage
