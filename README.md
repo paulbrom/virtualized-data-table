@@ -6,7 +6,7 @@
   </a>
   <h3>
     <i>
-      <p>A flexible, customizable, high-performance table for <a href="https://reactjs.org/">React</a>></p>
+      <p>A flexible, customizable, high-performance table for <a href="https://reactjs.org/">React</a></p>
       <p>based on Facebook's <a href="https://github.com/facebookarchive/fixed-data-table">fixed-data-table</a></p>
     </i>
   </h3>
