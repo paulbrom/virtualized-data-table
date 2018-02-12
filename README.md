@@ -6,9 +6,8 @@
   </a>
   <h3>
     <i>
-      A flexible, customizable, high-performance table for
-      <a href="https://reactjs.org/">React</a> based on Facebook's
-      <a href="https://github.com/facebookarchive/fixed-data-table">Fixed Data Table</a>
+      <p>A flexible, customizable, high-performance table for <a href="https://reactjs.org/">React</a>></p>
+      <p>based on Facebook's <a href="https://github.com/facebookarchive/fixed-data-table">Fixed Data Table</a></p>
     </i>
   </h3>
 </div>
@@ -48,9 +47,9 @@ Fixed Data Table:
     />
     <Column
       header={<Cell>Col 3</Cell>}
-      cell={({rowIndex, ...props}) => (
+      cell={({rowIndex, columnKey, ...props}) => (
         <Cell {...props}>
-          Data for column 3: {rows[rowIndex][2]}
+          Data for column 3: {rows[rowIndex][columnKey]}
         </Cell>
       )}
       width={2000}
@@ -60,10 +59,18 @@ Fixed Data Table:
 
 It should also support Cell classes built for use with fixed-data-table.
 
-This package could be a drop-in replacement for fixed-data-table in your project that could provide better performance than
+This package could be a replacement for fixed-data-table in your project that could provide better performance than
 fixed-data-table with minimal code changes.  That was the motivation for its creation.  However, this package is not guaranteed
 to handle all possible use cases of fixed-data-table, so if this package doesn't provide support for your use case, feel free
 to add support for it!
+
+### Porting from fixed-data-table
+
+In order to port your tables from fixed-data-table, you just need to add a few things:
+
+1) You need to ensure each column has a 'columnKey' string property
+2) You need to implement a rowGetter function as a property of your root Table which is passed a rowIndex and returns the data for that entire row.
+3) Your custom cells or cell handlers will be passed an object containing 'rowData' (obtained from rowGetter), as well as the rowIndex and columnKey where the cell is being rendered
 
 ### Additional features
 
