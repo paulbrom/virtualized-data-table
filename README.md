@@ -7,7 +7,7 @@
   <h3>
     <i>
       <p>A flexible, customizable, high-performance table for <a href="https://reactjs.org/">React</a>></p>
-      <p>based on Facebook's <a href="https://github.com/facebookarchive/fixed-data-table">Fixed Data Table</a></p>
+      <p>based on Facebook's <a href="https://github.com/facebookarchive/fixed-data-table">fixed-data-table</a></p>
     </i>
   </h3>
 </div>
@@ -20,16 +20,16 @@ npm install virtualized-data-table --save
 
 ### API
 
-Virtualized Data Table has an interface based on Facebook's now deprecated [Fixed Data Table](https://github.com/facebookarchive/fixed-data-table),
+Virtualized Data Table has an interface based on Facebook's now deprecated [fixed-data-table](https://github.com/facebookarchive/fixed-data-table),
 but improves the performance (poor performance being the main reason for its deprecation) by basing the implementation on [React Virtualized](https://github.com/bvaughn/react-virtualized) `<Grid>`.
 
-It supports much of, but not all, markup supported by Fixed Data Table.  In particular, it supports the concept of a `<Table>` with
-`<Column>` children that have both a header and cell renderer based on a `<Cell>`.  It should support the example shown on the front of
-Fixed Data Table:
+It supports much of, but not all, markup supported by fixed-data-table.  In particular, it supports the concept of a `<Table>` with
+`<Column>` children that have both a header and cell renderer based on a `<Cell>`.  Here are a few modifications to the example 
+shown on the front page of of [fixed-data-table](https://github.com/facebookarchive/fixed-data-table) to support virtualized-data-table:
 
 
 ```javascript
-  <Table
+  <VirtualizedDataTable
     rowHeight={50}
     rowsCount={rows.length}
     width={5000}
@@ -57,7 +57,7 @@ Fixed Data Table:
   </Table>
 ```
 
-It should also support Cell classes built for use with fixed-data-table.
+It should also support Cell classes built for use with fixed-data-table, with a few modifications (see below).
 
 This package could be a replacement for fixed-data-table in your project that could provide better performance than
 fixed-data-table with minimal code changes.  That was the motivation for its creation.  However, this package is not guaranteed
@@ -71,6 +71,8 @@ In order to port your tables from fixed-data-table, you just need to add a few t
 1) You need to ensure each column has a 'columnKey' string property
 2) You need to implement a rowGetter function as a property of your root Table which is passed a rowIndex and returns the data for that entire row.
 3) Your custom cells or cell handlers will be passed an object containing 'rowData' (obtained from rowGetter), as well as the rowIndex and columnKey where the cell is being rendered
+
+That should be it!  Once you change your table and cell classes to handle columnKeys and rowData, everything should "just work."
 
 ### Additional features
 
