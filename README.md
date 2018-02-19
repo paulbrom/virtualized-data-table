@@ -15,7 +15,7 @@
 
 ## Demo
 
-Click [here][https://raw.githubusercontent.com/paulbrom/virtualized-data-table/master/demo] to see a demo of vitualized-data-table!
+Click [here](https://htmlpreview.github.io/?https://github.com/paulbrom/virtualized-data-table/master/demo/index.html) to see a demo of virtualized-data-table!
 
 ## Basic Usage
 ### installation
