@@ -7,10 +7,15 @@
   <h3>
     <i>
       <p>A flexible, customizable, high-performance table for <a href="https://reactjs.org/">React</a></p>
-      <p>based on Facebook's <a href="https://github.com/facebookarchive/fixed-data-table">fixed-data-table</a></p>
+      <p>based on Facebook's <a href="https://github.com/facebookarchive/fixed-data-table">fixed-data-table</a>
+      and <a href="https://github.com/bvaughn/react-virtualized">react-virtualized</a></p>
     </i>
   </h3>
 </div>
+
+## Demo
+
+Click [here][https://raw.githubusercontent.com/paulbrom/virtualized-data-table/master/demo] to see a demo of vitualized-data-table!
 
 ## Basic Usage
 ### installation

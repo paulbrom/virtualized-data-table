@@ -407,7 +407,8 @@ class VirtualizedDataTable extends Component {
     }
 
     if ((rowIndex > -1) && (columnIndex > -1)) {
-      const { rowCount } = this.props;
+      const { rowCount, rowsCount } = this.props;
+      const rowCountUse = rowCount || rowsCount;
       const { columnCount } = this.prvCellGrid.props;
 
       switch (evt.code) {
@@ -446,7 +447,7 @@ class VirtualizedDataTable extends Component {
             editMode = true;
           } else {
             editMode = false;
-            if (rowIndex < rowCount - 1) {
+            if (rowIndex < rowCountUse - 1) {
               rowIndex += 1;
             }
           }
@@ -487,7 +488,7 @@ class VirtualizedDataTable extends Component {
       }
 
       if (!editMode &&
-        (rowIndex < rowCount) && (rowIndex >= 0) &&
+        (rowIndex < rowCountUse) && (rowIndex >= 0) &&
         (columnIndex < columnCount) && (columnIndex >= 0)) {
         // we plan to handle this key.  Don't propagate
         evt.stopPropagation();
@@ -1075,10 +1076,11 @@ class VirtualizedDataTable extends Component {
     cellHeight,
   }) {
     return (props) => {
-      const { rowCount, rowGetter } = this.props;
+      const { rowCount, rowsCount, rowGetter } = this.props;
+      const rowCountUse = rowCount || rowsCount;
       const { rowIndex, columnKey } = props; // eslint-disable-line react/prop-types
       const nonStyleProps = _.omit(props, ['style']);
-      if (rowIndex < rowCount) {
+      if (rowIndex < rowCountUse) {
         const styles = this.prvGetStyles();
         let cellUse = cell;
         if (_.isFunction(cell)) {
@@ -1128,7 +1130,7 @@ class VirtualizedDataTable extends Component {
     const isLastColumn = ((columnLeft + columnProps.width) >= tableProps.width);
     const columnWidth = columnProps.flexGrow ?
       Math.max(tableProps.width - (columnLeft + 2), columnProps.width) :
-      columnProps.width - (isLastColumn ? 2 : 0);
+      columnProps.width - (isLastColumn ? 16 : 0);
       // clip the last column slightly to accommodate table borders
     const headerRenderer = this.prvRenderHeaderCell({
       cell: header || <Cell />,
@@ -1201,6 +1203,7 @@ class VirtualizedDataTable extends Component {
     const {
       children,
       rowCount,
+      rowsCount,
       height,
       constrainWidth,
       rowGetter,
@@ -1215,6 +1218,7 @@ class VirtualizedDataTable extends Component {
       style,
       ...otherProps
     } = this.props;
+    const rowCountUse = rowCount || rowsCount;
     const cellGridHeight = height - (headerHeight + 2); // subtract 2 because of borders
     const useDefaultClipboard = !(onCellCut || onCellCopy || onCellPaste);
     let {
@@ -1250,7 +1254,7 @@ class VirtualizedDataTable extends Component {
     // the row count to that value
     const rowCountWithEmptySpace = Math.max(
       Math.floor((height - headerHeight) / rowHeight),
-      rowCount,
+      rowCountUse,
     );
 
     this.prvColumnInfo = [];
@@ -1490,7 +1494,8 @@ class VirtualizedDataTable extends Component {
 
 VirtualizedDataTable.propTypes = {
   children: PropTypes.arrayOf(PropTypes.element), // from react
-  rowCount: PropTypes.number.isRequired,
+  rowCount: PropTypes.number,
+  rowsCount: PropTypes.number,
   rowGetter: PropTypes.func.isRequired,
   height: PropTypes.number,
   style: PropTypes.object, // eslint-disable-line react/forbid-prop-types

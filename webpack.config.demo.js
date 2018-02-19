@@ -20,8 +20,7 @@ module.exports = {
       {
         test: /\.jsx?$/,
         include: [
-          path.join(__dirname, './src/demo/'),
-          path.join(__dirname, './src/table/'),
+          path.join(__dirname, './src/'),
         ],
         loader: 'babel-loader',
         options: {
