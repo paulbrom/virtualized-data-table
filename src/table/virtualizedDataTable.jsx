@@ -408,7 +408,7 @@ class VirtualizedDataTable extends Component {
 
     if ((rowIndex > -1) && (columnIndex > -1)) {
       const { rowCount, rowsCount } = this.props;
-      const rowCountUse = rowCount || rowsCount;
+      const rowCountUse = _.isNumber(rowCount) ? rowCount : rowsCount;
       const { columnCount } = this.prvCellGrid.props;
 
       switch (evt.code) {
@@ -1077,7 +1077,7 @@ class VirtualizedDataTable extends Component {
   }) {
     return (props) => {
       const { rowCount, rowsCount, rowGetter } = this.props;
-      const rowCountUse = rowCount || rowsCount;
+      const rowCountUse = _.isNumber(rowCount) ? rowCount : rowsCount;
       const { rowIndex, columnKey } = props; // eslint-disable-line react/prop-types
       const nonStyleProps = _.omit(props, ['style']);
       if (rowIndex < rowCountUse) {
@@ -1218,7 +1218,7 @@ class VirtualizedDataTable extends Component {
       style,
       ...otherProps
     } = this.props;
-    const rowCountUse = rowCount || rowsCount;
+    const rowCountUse = _.isNumber(rowCount) ? rowCount : rowsCount;
     const cellGridHeight = height - (headerHeight + 2); // subtract 2 because of borders
     const useDefaultClipboard = !(onCellCut || onCellCopy || onCellPaste);
     let {
