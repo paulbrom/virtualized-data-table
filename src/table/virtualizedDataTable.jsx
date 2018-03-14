@@ -17,6 +17,8 @@ const ROW_END = 'rowEnd';
 const COLUMN_START = 'columnStart';
 const COLUMN_END = 'columnEnd';
 
+const DEFAULT_HIGHLIGHT_ROW_COLOR = '#B3E5FC';
+
 // this is an implementation of a react-virtualized table that is styled like a fixed-data-table,
 // and supports column resizability using the same callbacks as fixed-data-table
 class VirtualizedDataTable extends Component {
@@ -953,6 +955,9 @@ class VirtualizedDataTable extends Component {
         flexDirection: 'row',
         height: '100%',
       },
+      evenRows: {
+        background: 'white',
+      },
       oddRows: {
         background: '#f6f7f8',
       },
@@ -1216,6 +1221,11 @@ class VirtualizedDataTable extends Component {
       onCellCopy,
       onCellPaste,
       style,
+      evenRowBackgroundColor,
+      oddRowBackgroundColor,
+      highlightRowKey,
+      highlightRowValue,
+      highlightRowColor,
       ...otherProps
     } = this.props;
     const rowCountUse = _.isNumber(rowCount) ? rowCount : rowsCount;
@@ -1342,11 +1352,22 @@ class VirtualizedDataTable extends Component {
       const cellIsFocused = !forHeader &&
         (focusedCell.rowIndex === rowIndex) &&
         (focusedCell.columnIndex === columnIndex);
+      let cellBackground = (rowIndex % 2) ?
+        (evenRowBackgroundColor || styles.evenRows.background) :
+        (oddRowBackgroundColor || styles.oddRows.background);
+      if (highlightRowKey && highlightRowValue) {
+        const highlightKeyVal = (
+          rowData.get ? rowData.get(highlightRowKey) : rowData[highlightRowKey]
+        );
+        if (highlightKeyVal === highlightRowValue) {
+          cellBackground = highlightRowColor || DEFAULT_HIGHLIGHT_ROW_COLOR;
+        }
+      }
       const cellOuterStyle = _.assign(
         {},
         propsUse.style,
         forHeader ? headerStyle : gridStyle, {
-          background: (rowIndex % 2) ? 'white' : styles.oddRows.background,
+          background: cellBackground,
         },
         cellIsSelected ? (selectionStyle || {}) : {},
         cellIsFocused ? (focusStyle || {}) : {},
@@ -1525,6 +1546,11 @@ VirtualizedDataTable.propTypes = {
   onCellPaste: PropTypes.func,
   shouldHandleKeyEvent: PropTypes.func,
   performingBulkUpdate: PropTypes.number,
+  evenRowBackgroundColor: PropTypes.string,
+  oddRowBackgroundColor: PropTypes.string,
+  highlightRowValue: PropTypes.any, // eslint-disable-line react/forbid-prop-types
+  highlightRowKey: PropTypes.string,
+  highlightRowColor: PropTypes.string,
 };
 
 VirtualizedDataTable.propTypes = _.assign({}, Grid.propTypes, VirtualizedDataTable.propTypes);
