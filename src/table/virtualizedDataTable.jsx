@@ -7,8 +7,6 @@ import Draggable from 'react-draggable';
 import shallowCompare from 'react-addons-shallow-compare';
 import _ from 'lodash';
 import Cell from './cell';
-import Column from './column';
-import ColumnGroup from './columnGroup';
 import KeyHandler from '../utils/keyHandler';
 import ClipboardHelper from '../utils/clipboardHelper';
 
@@ -1276,12 +1274,12 @@ class VirtualizedDataTable extends Component {
     // children
     React.Children.forEach(children, (child) => {
       if (child) {
-        if (child.type === ColumnGroup) {
+        if (child.type && (child.type.name === 'ColumnGroup')) {
           let groupWidth = 0;
 
           React.Children.forEach(child.props.children, (grandChild) => {
             if (grandChild) {
-              if (grandChild.type !== Column) {
+              if (grandChild.type && (grandChild.type.name !== 'Column')) {
                 throw new Error('unexpected child - only Columns can be children of ColumnGroups!');
               }
 
@@ -1306,7 +1304,7 @@ class VirtualizedDataTable extends Component {
             group: child,
             groupWidth,
           });
-        } else if (child.type === Column) {
+        } else if (child.type && (child.type.name === 'Column')) {
           columns.push(this.prvRenderTableColumn({
             tableProps,
             styles,
