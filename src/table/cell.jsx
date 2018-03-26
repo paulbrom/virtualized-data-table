@@ -19,7 +19,6 @@ class Cell extends Component {
 
   componentWillUnmount() {
     if (this.mountTimer) {
-      console.error('++ cleared mounttimer');
       clearTimeout(this.mountTimer);
       this.mountTimer = null;
     }
