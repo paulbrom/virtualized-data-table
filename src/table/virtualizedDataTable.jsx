@@ -1059,6 +1059,8 @@ class VirtualizedDataTable extends Component {
       const clonedCell = cell ? React.cloneElement(cell, _.assign({}, cell.props, props, {
         style: cellStyle,
         columnKey,
+        cellWidth,
+        cellHeight,
       })) : null;
 
       return (
