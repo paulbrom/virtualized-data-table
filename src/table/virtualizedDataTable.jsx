@@ -155,7 +155,7 @@ class VirtualizedDataTable extends Component {
   // TODO: we are compensating for a bug in Chrome or React where issuing a React update cycle
   // (setState) under a scroll event can cause laggy scroll performance, and temporary misalignment
   // of the grids.  Once Chrome or React fixes this issue, we should switch to use MultiGrid and
-  // directly setting transforms here
+  // stop directly setting transforms here
   prvHandleScroll({ scrollLeft }) {
     const transformStyle = `translate(-${scrollLeft}px, 0px)`;
     const groupHeader = ReactDOM.findDOMNode(this.prvGroupHeader); // eslint-disable-line max-len, react/no-find-dom-node
@@ -165,6 +165,8 @@ class VirtualizedDataTable extends Component {
     const headerGrid = ReactDOM.findDOMNode(this.prvHeaderGrid); // eslint-disable-line max-len, react/no-find-dom-node
     if (headerGrid) {
       headerGrid.style.transform = transformStyle;
+    } else if (this.prvHeaderGrid && this.prvHeaderGrid._scrollingContainer) { // eslint-disable-line max-len, no-underscore-dangle
+      this.prvHeaderGrid._scrollingContainer.style.transform = transformStyle; // eslint-disable-line max-len, no-underscore-dangle
     }
 
     if (this.prvScrollTimeout) {
