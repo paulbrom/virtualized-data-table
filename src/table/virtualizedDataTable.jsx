@@ -907,8 +907,8 @@ class VirtualizedDataTable extends Component {
         overflow: 'hidden',
       },
       table: {
-        webkitUserSelect: 'none',
-        mozUserSelect: 'none',
+        WebkitUserSelect: 'none',
+        MozUserSelect: 'none',
         msUserSelect: 'none',
         userSelect: 'none',
       },
@@ -917,8 +917,8 @@ class VirtualizedDataTable extends Component {
       headerTable: {
         overflow: 'hidden',
         border: 'none',
-        webkitUserSelect: 'none',
-        mozUserSelect: 'none',
+        WebkitUserSelect: 'none',
+        MozUserSelect: 'none',
         msUserSelect: 'none',
         userSelect: 'none',
       },
@@ -1518,7 +1518,10 @@ class VirtualizedDataTable extends Component {
 }
 
 VirtualizedDataTable.propTypes = {
-  children: PropTypes.arrayOf(PropTypes.element), // from react
+  children: PropTypes.oneOfType([ // from react
+    PropTypes.arrayOf(PropTypes.node),
+    PropTypes.node,
+  ]),
   rowCount: PropTypes.number,
   rowsCount: PropTypes.number,
   rowGetter: PropTypes.func.isRequired,
