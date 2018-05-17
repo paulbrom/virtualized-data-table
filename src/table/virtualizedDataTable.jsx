@@ -1451,7 +1451,6 @@ class VirtualizedDataTable extends Component {
         onCopy={this.prvHandleCutOrCopy(false /* isCut */)}
         onPaste={this.prvHandlePaste}
         getInputRef={() => this.prvCellGrid}
-        allowInputCutCopy={false}
         allowEditableCutCopy={false}
       />
     ) : null;

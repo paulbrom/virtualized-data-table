@@ -3,8 +3,6 @@ import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import { isInput } from './utils';
 
-const FLOATING_BUTTON_SIZE = 60;
-
 // this is a non-rendering component which can subscribe to copy/paste messages
 class ClipboardHelper extends Component {
   constructor(props, context) {
@@ -50,16 +48,12 @@ class ClipboardHelper extends Component {
   }
 
   prvEventTargetIsRefDescendant(evt, isCutCopy) {
-    const { getInputRef } = this.props;
+    const {
+      getInputRef,
+      allowEditableCutCopy,
+      allowEditablePaste,
+    } = this.props;
     if (getInputRef) {
-      // special - if target is an element than spans the entire page,
-      // then assume target is ref descendant
-      const computedStyle = window.getComputedStyle(evt.target);
-      if ((parseInt(computedStyle.width, 10) === window.innerWidth) &&
-        (parseInt(computedStyle.height, 10) === window.innerHeight)) {
-        return this.prvEventTargetIsAllowedInput(evt, isCutCopy);
-      }
-
       const refNode = ReactDOM.findDOMNode(getInputRef()); // eslint-disable-line max-len, react/no-find-dom-node
       let node = evt.target;
       let isDescendant = false;
@@ -70,21 +64,9 @@ class ClipboardHelper extends Component {
         node = node.parentNode;
       } while (node && !isDescendant);
 
-      if (!isDescendant) {
-        // special - ignore any square buttons in target (like FABTooltip)
-        // and assume target is ref descendant
-        node = evt.target;
-        while (node) {
-          if (node.nodeName.toLowerCase() === 'button') {
-            const rect = node.getBoundingClientRect();
-            if ((rect.width === rect.height) && (rect.width < FLOATING_BUTTON_SIZE)) {
-              return true;
-            }
-          }
-          node = node.parentNode;
-        }
-      }
-      return isDescendant;
+      const allowEditable = (isCutCopy ? allowEditableCutCopy : allowEditablePaste);
+      return isDescendant ? this.prvEventTargetIsAllowedInput(evt, isCutCopy) :
+        !isInput(evt.target, allowEditable);
     }
     return true;
   }
