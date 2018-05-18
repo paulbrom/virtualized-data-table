@@ -2,16 +2,16 @@
 
 <h3>Table of contents</h3>
 
-* **[&lt;VirtualizedDataTable&gt;](#&lt;VirtualizedDataTable&gt;)**
-* **[&lt;Column&gt;](#&lt;Column&gt;)**
-* **[&lt;ColumnGroup&gt;](#&lt;ColumnGroup&gt;)**
-* **[&lt;Cell&gt;](#&lt;Cell&gt;)**
-* **[&lt;ClipboardHelper&gt;](#&lt;ClipboardHelper&gt;)**
-* **[&lt;KeyHandler&gt;](#&lt;KeyHandler&gt;)**
+* **[&lt;VirtualizedDataTable&gt;](#VirtualizedDataTable)**
+* **[&lt;Column&gt;](#Column)**
+* **[&lt;ColumnGroup&gt;](#ColumnGroup)**
+* **[&lt;Cell&gt;](#Cell)**
+* **[&lt;ClipboardHelper&gt;](#ClipboardHelper)**
+* **[&lt;KeyHandler&gt;](#KeyHandler)**
 
 ---
 
-### &lt;VirtualizedDataTable&gt;
+### &lt;VirtualizedDataTable&gt; <a name="VirtualizedDataTable"></a>
 
 This is the core table component which supports Fixed Data Table style properties and markup.
 <h5>Example:</h5>
@@ -58,7 +58,8 @@ This is the core table component which supports Fixed Data Table style propertie
 |<sub>highlightRowValue</sub>|<sub>any</sub>|<sub>id_1</sub>|<sub>no</sub>|<sub>no</sub>|<sub>The value to be checked for in the row to see if this row should be a highlighted row</sub>|
 |<sub>highlightRowColor</sub>|<sub>string</sub>|<sub>#00ffff</sub>|<sub>no</sub>|<sub>no</sub>|<sub>The background color to use for highlighted row(s).  If not defined, then color #b3e5fc will be used</sub>|
 
-### &lt;Column&gt;
+
+### &lt;Column&gt; <a name="Column"></a>
 
 This component is used to define a column in the table.
 <h5>Example:</h5>
@@ -76,7 +77,8 @@ This component is used to define a column in the table.
 |<sub>header</sub>|<sub>element</sub>|<sub><Cell>Spend</Cell></sub>|<sub>yes</sub>|<sub>no</sub>|<sub>The header cell to apply to this column</sub>|
 |<sub>cell</sub>|<sub>element</sub>|<sub>({ rowData, columnKey, ...props }) => (<Cell {...props}>Spend: { rowData[columnKey] }</Cell></sub>|<sub>yes</sub>|<sub>yes</sub>|<sub>The cell to apply for regular rows in this column</sub>|
 
-### &lt;ColumnGroup&gt;
+
+### &lt;ColumnGroup&gt; <a name="ColumnGroup"></a>
 
 This component is used to define a column in the table.
 <h5>Example:</h5>
@@ -92,7 +94,8 @@ This component is used to define a column in the table.
 |<sub>header</sub>|<sub>element</sub>|<sub><Cell>Spend</Cell></sub>|<sub>no</sub>|<sub>no</sub>|<sub>The header cell to apply to this column group</sub>|
 |<sub>hidden</sub>|<sub>bool</sub>|<sub>true</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If true, then hide this column group but render vertical space for it</sub>|
 
-### &lt;Cell&gt;
+
+### &lt;Cell&gt; <a name="Cell"></a>
 
 This is the base cell component for cells in the table.
 <h5>Example:</h5>
@@ -113,7 +116,8 @@ This is the base cell component for cells in the table.
 |<sub>style</sub>|<sub>func OR object</sub>|<sub>{ fontSize: '14px' }</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Style to use for this cell.  If style should vary based on rowIndex or columnKey, then implement a function and it will be called with (rowData, rowIndex, columnKey)</sub>|
 |<sub>mountRenderDelay</sub>|<sub>number</sub>|<sub>50</sub>|<sub>no</sub>|<sub>no</sub>|<sub>A delay timeout in msec between cell mount and when the cell contents are rendered.  Useful if your cell is expensive to render as this can help avoid rendering you cell while the user is scrolling past it</sub>|
 
-### &lt;ClipboardHelper&gt;
+
+### &lt;ClipboardHelper&gt; <a name="ClipboardHelper"></a>
 
 This is a non-rendering helper component which can handle copy/paste messages
 <h5>Example:</h5>
@@ -137,7 +141,8 @@ This is a non-rendering helper component which can handle copy/paste messages
 |<sub>pushBulkUpdate</sub>|<sub>func</sub>|<sub>() => this.setState({ bulk: this.state.bulk + 1 })</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If defined, this callback will be called when a bulk paste operation begins.  You should use this to send performingBulkUpdate to the VirtualizedDataTable for performance reasons on paste</sub>|
 |<sub>popBulkUpdate</sub>|<sub>func</sub>|<sub>() => this.setState({ bulk: this.state.bulk - 1 })</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If defined, this callback will be called when a bulk paste operation ends.  You should use this to send performingBulkUpdate to the VirtualizedDataTable for performance reasons on paste</sub>|
 
-### &lt;KeyHandler&gt;
+
+### &lt;KeyHandler&gt; <a name="KeyHandler"></a>
 
 This is a non-rendering helper component which can handle keyboard messages
 <h5>Example:</h5>
