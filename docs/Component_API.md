@@ -22,6 +22,7 @@ This is the core table component which supports Fixed Data Table style propertie
 
 <h5>Properties:</h5>
 
+<p style="font-size: 10px">
 |Property Name|Data Type|Example Value|In Fixed-Data-Table?|Required?|Description|
 |:-----------:|:-------:|:-----------:|:------------------:|:-------:|:---------:|
 |rowCount|number|4|no|Either rowCount or rowsCount must be defined|The number of rows in the table|
@@ -57,6 +58,7 @@ This is the core table component which supports Fixed Data Table style propertie
 |highlightRowKey|string|widgetId|no|no|The key to be inspected in the object returned from rowGetter().  If that key value matches the highlightRowValue prop then the row will be a highlighted row|
 |highlightRowValue|any|id_1|no|no|The value to be checked for in the row to see if this row should be a highlighted row|
 |highlightRowColor|string|#00ffff|no|no|The background color to use for highlighted row(s).  If not defined, then color #b3e5fc will be used|
+</p>
 
 <h3>&lt;Column&gt;</h3>
 
