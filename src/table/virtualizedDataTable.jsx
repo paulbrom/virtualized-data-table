@@ -543,7 +543,7 @@ class VirtualizedDataTable extends Component {
   prvHandleCutOrCopy(isCut) {
     return ((evt) => {
       if (evt.clipboardData) {
-        const { onCellCut, onCellCopy } = this.props;
+        const { onCellCut, onCellCopy, rowGetter } = this.props;
         const tabChar = String.fromCharCode(9);
         const selectionRangeToUse = this.prvGetSelectionRangesForCopyPaste(false /* forPaste */)
           .last();
@@ -559,6 +559,7 @@ class VirtualizedDataTable extends Component {
           // get the copy data, or, assume the cells support getValue() and clearValue() calls on
           // the cell reference and use those calls to get the copy data
           for (let rowIndex = rowStart; rowIndex <= rowEnd; rowIndex += 1) {
+            const rowData = rowGetter({ index: rowIndex });
             for (let columnIndex = columnStart; columnIndex <= columnEnd; columnIndex += 1) {
               const { columnKey } = this.prvColumnInfo[columnIndex];
               const cellFunc = isCut ? onCellCut : onCellCopy;
@@ -570,6 +571,7 @@ class VirtualizedDataTable extends Component {
                   rowIndex,
                   columnIndex,
                   columnKey,
+                  rowData,
                 });
               if (isCut && cellRef && _.isFunction(cellRef.clearValue)) {
                 cellRef.clearValue();
@@ -756,7 +758,7 @@ class VirtualizedDataTable extends Component {
 
   // issues a focus change to the table, based on keyboard selections
   prvFocusCell(rowIndex, columnIndex, evt) {
-    const { onCellFocus } = this.props;
+    const { onCellFocus, rowGetter } = this.props;
     if (onCellFocus) {
       // releaseFocus() is needed because the onCellFocus() call in many table implementations
       // modifies state in a way that prevents the normal saving of data upon focus release, so we
@@ -770,7 +772,9 @@ class VirtualizedDataTable extends Component {
         }
       }
 
+      const rowData = rowGetter({ index: rowIndex });
       return onCellFocus({
+        rowData,
         rowIndex,
         columnIndex,
         columnKey: ((columnIndex > -1) ?
@@ -1524,11 +1528,9 @@ VirtualizedDataTable.propTypes = {
   rowCount: PropTypes.number,
   rowsCount: PropTypes.number,
   rowGetter: PropTypes.func.isRequired,
-  height: PropTypes.number,
+  height: PropTypes.number.isRequired,
+  width: PropTypes.number.isRequired,
   style: PropTypes.object, // eslint-disable-line react/forbid-prop-types
-  cellRenderer: PropTypes.func,
-  columnCount: PropTypes.number,
-  columnWidth: PropTypes.number,
   rowHeight: PropTypes.number.isRequired,
   headerHeight: PropTypes.number.isRequired,
   groupHeaderHeight: PropTypes.number,
@@ -1557,6 +1559,9 @@ VirtualizedDataTable.propTypes = {
   highlightRowValue: PropTypes.any, // eslint-disable-line react/forbid-prop-types
   highlightRowKey: PropTypes.string,
   highlightRowColor: PropTypes.string,
+  // below properties not actually used by VirtualizedDataTable, but linter is confused
+  cellRenderer: PropTypes.func,
+  columnWidth: PropTypes.number,
 };
 
 VirtualizedDataTable.propTypes = _.assign({}, Grid.propTypes, VirtualizedDataTable.propTypes);
