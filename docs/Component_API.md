@@ -22,43 +22,41 @@ This is the core table component which supports Fixed Data Table style propertie
 
 <h5>Properties:</h5>
 
-<p style="font-size: 10px">
 |Property Name|Data Type|Example Value|In Fixed-Data-Table?|Required?|Description|
 |:-----------:|:-------:|:-----------:|:------------------:|:-------:|:---------:|
-|rowCount|number|4|no|Either rowCount or rowsCount must be defined|The number of rows in the table|
-|rowsCount|number|4|yes|Either rowCount or rowsCount must be defined|The number of rows in the table|
-|rowGetter|func|({ rowIndex }) => data[rowIndex];|no|yes|returns the data for the given row.  This data must take the form of an object with a key for each columnKey.  This can be an Immutable.JS or regular JS object|
-|height|number|450|yes|yes|The height of the table to render.  If the rows take up more vertical space, a scrollbar will appear.  If they take up less vertical space, empty rows will be drawn|
-|width|number|800|yes|yes|The width of the table to render.  If the rows take up more horizontal space, a scrollbar will appear.  If they take up less horizontal space, apply flexGrow={1} to final column for it to take up remaining width|
-|style|object|{ border: '1px solid black' }|yes|no|The style to apply to the outer frame of the table|
-|rowHeight|number|45|yes|yes|The height of a row in the table.  Currently all rows must have the same height|
-|headerHeight|number|60|yes|yes|The height of the header row of the table|
-|groupHeaderHeight|number|55|no|yes|The height of the group header of the table (a header row above the header row which can span headers)|
-|onColumnResizeEndCallback|func|(columnWidth, columnKey) => this.setState({ columnKey: columnWidth })|no|no|This function is called when the user finishes resizing a column.  The column key of the resized column and its new width will be provided|
-|noHeaderScroll|bool|true|no|no|If true, the header will not show a scrollbar if their cells are taller than header height|
-|allowRowSelect|bool|true|no|no|If true, then entire rows can be selected by clicking a cell|
-|allowRangeSelect|bool|true|no|no|If true, then individual cells or rectangular groups of cells can be selected by clicking and then using shift-arrow keys|
-|allowMultiSelect|bool|true|no|no|If true, then multiple rows or ranges can be selected by CTRL-clicking|
-|focusStyle|object|{ border: '2px solid red' }|no|no|The style to apply to cells which have been focused (clicked)
-|selectionStyle|object|{ background: 'yellow' }|no|no|The style to apply to cells which have been selected|
-|canSelectColumn|func|(columnKey) => false|no|no|Called when a selection is occurring in a particular column.  Returns whether selection should be allowed|
-|canSelectRow|func|(rowIndex) => false|no|no|Called when a selection is occurring in a particular row.  Returns whether selection should be allowed|
-|onSelectionChange|func|(ranges) => { ... do something ... }|no|no|Called when the selection in the table changes.  Ranges will be passed an Immutable.JS list of objects which have a rowStart, rowEnd, columnStart, and columnEnd which are all 0-based numbers|
-|onCellClick|func|({ evt, rowIndex, columnIndex, columnKey, rowData }) => { ... do something ... }|no|no|Called when a cell is clicked|
-|onCellDoubleClick|func|({ evt, rowIndex, columnIndex, columnKey, rowData }) => { ... do something ... }|no|no|Called when a cell is double-clicked|
-|onCellHover|func|({ evt, rowIndex, columnIndex, columnKey, rowData }) => { ... do something ... }|no|no|Called when a cell is hovered|
-|onCellFocus|func|({ evt, rowIndex, columnIndex, columnKey, rowData }) => { ... do something ... }|no|no|Called when a cell is focused (clicked or navigated to via arrow keys)|
-|onCellCopy|func|({ rowIndex, columnIndex, columnKey, rowData }) => { return rowData[columnKey]; }|no|no|Called when a cell data needs to be copied to clipboard.  The data to be copied should be returned from this function as a string|
-|onCellCut|func|({ rowIndex, columnIndex, columnKey, rowData }) => { return rowData[columnKey]; }|no|no|Called when a cell data needs to be cut to clipboard.  The data to be copied should be returned from this function as a string|
-|onCellPaste|func|({ rowIndex, columnIndex, columnKey, text }) => { ... do something with text ... }|no|no|Called when a cell data needs to be pasted from the clipboard.|
-|shouldHandleKeyEvent|func|(evt) => true|no|no|Whenever a keyboard event is seen by the data table, this function will be called to check to see if we should handle that key event|
-|performingBulkUpdate|number|0|no|no|If > 0, then all rendering will be suppressed.  This is a performance improvement used when many cells are being bulk updated, like during a paste operation|
-|evenRowBackgroundColor|string|#e0e0e0|no|no|The background color to use for even-numbered rows|
-|oddRowBackgroundColor|string|#bbb|no|no|The background color to use for odd-numbered rows|
-|highlightRowKey|string|widgetId|no|no|The key to be inspected in the object returned from rowGetter().  If that key value matches the highlightRowValue prop then the row will be a highlighted row|
-|highlightRowValue|any|id_1|no|no|The value to be checked for in the row to see if this row should be a highlighted row|
-|highlightRowColor|string|#00ffff|no|no|The background color to use for highlighted row(s).  If not defined, then color #b3e5fc will be used|
-</p>
+|<sub>rowCount</sub>|<sub>number</sub>|<sub>4</sub>|<sub>no</sub>|<sub>Either rowCount or rowsCount must be defined</sub>|<sub>The number of rows in the table</sub>|
+|<sub>rowsCount</sub>|<sub>number</sub>|<sub>4</sub>|<sub>yes</sub>|<sub>Either rowCount or rowsCount must be defined</sub>|<sub>The number of rows in the table</sub>|
+|<sub>rowGetter</sub>|<sub>func</sub>|<sub>({ rowIndex }) => data[rowIndex];</sub>|<sub>no</sub>|<sub>yes</sub>|<sub>returns the data for the given row.  This data must take the form of an object with a key for each columnKey.  This can be an Immutable.JS or regular JS object</sub>|
+|<sub>height</sub>|<sub>number</sub>|<sub>450</sub>|<sub>yes</sub>|<sub>yes</sub>|<sub>The height of the table to render.  If the rows take up more vertical space, a scrollbar will appear.  If they take up less vertical space, empty rows will be drawn</sub>|
+|<sub>width</sub>|<sub>number</sub>|<sub>800</sub>|<sub>yes</sub>|<sub>yes</sub>|<sub>The width of the table to render.  If the rows take up more horizontal space, a scrollbar will appear.  If they take up less horizontal space, apply flexGrow={1} to final column for it to take up remaining width</sub>|
+|<sub>style</sub>|<sub>object</sub>|<sub>{ border: '1px solid black' }</sub>|<sub>yes</sub>|<sub>no</sub>|<sub>The style to apply to the outer frame of the table</sub>|
+|<sub>rowHeight</sub>|<sub>number</sub>|<sub>45</sub>|<sub>yes</sub>|<sub>yes</sub>|<sub>The height of a row in the table.  Currently all rows must have the same height</sub>|
+|<sub>headerHeight</sub>|<sub>number</sub>|<sub>60</sub>|<sub>yes</sub>|<sub>yes</sub>|<sub>The height of the header row of the table</sub>|
+|<sub>groupHeaderHeight</sub>|<sub>number</sub>|<sub>55</sub>|<sub>no</sub>|<sub>yes</sub>|<sub>The height of the group header of the table (a header row above the header row which can span headers)</sub>|
+|<sub>onColumnResizeEndCallback</sub>|<sub>func</sub>|<sub>(columnWidth, columnKey) => this.setState({ columnKey: columnWidth })</sub>|<sub>no</sub>|<sub>no</sub>|<sub>This function is called when the user finishes resizing a column.  The column key of the resized column and its new width will be provided</sub>|
+|<sub>noHeaderScroll</sub>|<sub>bool</sub>|<sub>true</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If true, the header will not show a scrollbar if their cells are taller than header height</sub>|
+|<sub>allowRowSelect</sub>|<sub>bool</sub>|<sub>true</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If true, then entire rows can be selected by clicking a cell</sub>|
+|<sub>allowRangeSelect</sub>|<sub>bool</sub>|<sub>true</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If true, then individual cells or rectangular groups of cells can be selected by clicking and then using shift-arrow keys</sub>|
+|<sub>allowMultiSelect</sub>|<sub>bool</sub>|<sub>true</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If true, then multiple rows or ranges can be selected by CTRL-clicking</sub>|
+|<sub>focusStyle</sub>|<sub>object</sub>|<sub>{ border: '2px solid red' }</sub>|<sub>no</sub>|<sub>no</sub>|<sub>The style to apply to cells which have been focused (clicked)|
+|<sub>selectionStyle</sub>|<sub>object</sub>|<sub>{ background: 'yellow' }</sub>|<sub>no</sub>|<sub>no</sub>|<sub>The style to apply to cells which have been selected</sub>|
+|<sub>canSelectColumn</sub>|<sub>func</sub>|<sub>(columnKey) => false</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Called when a selection is occurring in a particular column.  Returns whether selection should be allowed</sub>|
+|<sub>canSelectRow</sub>|<sub>func</sub>|<sub>(rowIndex) => false</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Called when a selection is occurring in a particular row.  Returns whether selection should be allowed</sub>|
+|<sub>onSelectionChange</sub>|<sub>func</sub>|<sub>(ranges) => { ... do something ... }</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Called when the selection in the table changes.  Ranges will be passed an Immutable.JS list of objects which have a rowStart, rowEnd, columnStart, and columnEnd which are all 0-based numbers</sub>|
+|<sub>onCellClick</sub>|<sub>func</sub>|<sub>({ evt, rowIndex, columnIndex, columnKey, rowData }) => { ... do something ... }</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Called when a cell is clicked</sub>|
+|<sub>onCellDoubleClick</sub>|<sub>func</sub>|<sub>({ evt, rowIndex, columnIndex, columnKey, rowData }) => { ... do something ... }</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Called when a cell is double-clicked</sub>|
+|<sub>onCellHover</sub>|<sub>func</sub>|<sub>({ evt, rowIndex, columnIndex, columnKey, rowData }) => { ... do something ... }</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Called when a cell is hovered</sub>|
+|<sub>onCellFocus</sub>|<sub>func</sub>|<sub>({ evt, rowIndex, columnIndex, columnKey, rowData }) => { ... do something ... }</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Called when a cell is focused (clicked or navigated to via arrow keys)</sub>|
+|<sub>onCellCopy</sub>|<sub>func</sub>|<sub>({ rowIndex, columnIndex, columnKey, rowData }) => { return rowData[columnKey]; }</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Called when a cell data needs to be copied to clipboard.  The data to be copied should be returned from this function as a string</sub>|
+|<sub>onCellCut</sub>|<sub>func</sub>|<sub>({ rowIndex, columnIndex, columnKey, rowData }) => { return rowData[columnKey]; }</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Called when a cell data needs to be cut to clipboard.  The data to be copied should be returned from this function as a string</sub>|
+|<sub>onCellPaste</sub>|<sub>func</sub>|<sub>({ rowIndex, columnIndex, columnKey, text }) => { ... do something with text ... }</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Called when a cell data needs to be pasted from the clipboard.</sub>|
+|<sub>shouldHandleKeyEvent</sub>|<sub>func</sub>|<sub>(evt) => true</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Whenever a keyboard event is seen by the data table, this function will be called to check to see if we should handle that key event</sub>|
+|<sub>performingBulkUpdate</sub>|<sub>number</sub>|<sub>0</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If > 0, then all rendering will be suppressed.  This is a performance improvement used when many cells are being bulk updated, like during a paste operation</sub>|
+|<sub>evenRowBackgroundColor</sub>|<sub>string</sub>|<sub>#e0e0e0</sub>|<sub>no</sub>|<sub>no</sub>|<sub>The background color to use for even-numbered rows</sub>|
+|<sub>oddRowBackgroundColor</sub>|<sub>string</sub>|<sub>#bbb</sub>|<sub>no</sub>|<sub>no</sub>|<sub>The background color to use for odd-numbered rows</sub>|
+|<sub>highlightRowKey</sub>|<sub>string</sub>|<sub>widgetId</sub>|<sub>no</sub>|<sub>no</sub>|<sub>The key to be inspected in the object returned from rowGetter().  If that key value matches the highlightRowValue prop then the row will be a highlighted row</sub>|
+|<sub>highlightRowValue</sub>|<sub>any</sub>|<sub>id_1</sub>|<sub>no</sub>|<sub>no</sub>|<sub>The value to be checked for in the row to see if this row should be a highlighted row</sub>|
+|<sub>highlightRowColor</sub>|<sub>string</sub>|<sub>#00ffff</sub>|<sub>no</sub>|<sub>no</sub>|<sub>The background color to use for highlighted row(s).  If not defined, then color #b3e5fc will be used</sub>|
 
 <h3>&lt;Column&gt;</h3>
 
