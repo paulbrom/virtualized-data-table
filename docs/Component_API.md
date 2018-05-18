@@ -2,16 +2,16 @@
 
 <h3>Table of contents</h3>
 
-* **[\<VirtualizedDataTable\>](#user-content-\<VirtualizedDataTable\>)**
-* **[\<Column\>](#user-content-\<Column\>)**
-* **[\<ColumnGroup\>](#user-content-\<ColumnGroup\>)**
-* **[\<Cell\>](#user-content-\<Cell\>)**
-* **[\<ClipboardHelper\>](#user-content-\<ClipboardHelper\>)**
-* **[\<KeyHandler\>](#user-content-\<KeyHandler\>)**
+* **[&lt;VirtualizedDataTable&gt;](#user-content-&lt;VirtualizedDataTable&gt;)**
+* **[&lt;Column&gt;](#user-content-&lt;Column&gt;)**
+* **[&lt;ColumnGroup&gt;](#user-content-&lt;ColumnGroup&gt;)**
+* **[&lt;Cell&gt;](#user-content-&lt;Cell&gt;)**
+* **[&lt;ClipboardHelper&gt;](#user-content-&lt;ClipboardHelper&gt;)**
+* **[&lt;KeyHandler&gt;](#user-content-&lt;KeyHandler&gt;)**
 
 ---
 
-<h3>\<VirtualizedDataTable\></h3>
+<h3>&lt;VirtualizedDataTable&gt;</h3>
 
 This is the core table component which supports Fixed Data Table style properties and markup.
 <h5>Example:</h5>
@@ -32,7 +32,7 @@ This is the core table component which supports Fixed Data Table style propertie
 |style|object|{ border: '1px solid black' }|yes|no|The style to apply to the outer frame of the table|
 |rowHeight|number|45|yes|yes|The height of a row in the table.  Currently all rows must have the same height|
 |headerHeight|number|60|yes|yes|The height of the header row of the table|
-|groupHeaderHeight|55|no|yes|The height of the group header of the table (a header row above the header row which can span headers)|
+|groupHeaderHeight|number|55|no|yes|The height of the group header of the table (a header row above the header row which can span headers)|
 |onColumnResizeEndCallback|func|(columnWidth, columnKey) => this.setState({ columnKey: columnWidth })|no|no|This function is called when the user finishes resizing a column.  The column key of the resized column and its new width will be provided|
 |noHeaderScroll|bool|true|no|no|If true, the header will not show a scrollbar if their cells are taller than header height|
 |allowRowSelect|bool|true|no|no|If true, then entire rows can be selected by clicking a cell|
@@ -51,14 +51,14 @@ This is the core table component which supports Fixed Data Table style propertie
 |onCellCut|func|({ rowIndex, columnIndex, columnKey, rowData }) => { return rowData[columnKey]; }|no|no|Called when a cell data needs to be cut to clipboard.  The data to be copied should be returned from this function as a string|
 |onCellPaste|func|({ rowIndex, columnIndex, columnKey, text }) => { ... do something with text ... }|no|no|Called when a cell data needs to be pasted from the clipboard.|
 |shouldHandleKeyEvent|func|(evt) => true|no|no|Whenever a keyboard event is seen by the data table, this function will be called to check to see if we should handle that key event|
-|performingBulkUpdate|number|no|no|If > 0, then all rendering will be suppressed.  This is a performance improvement used when many cells are being bulk updated, like during a paste operation|
+|performingBulkUpdate|number|0|no|no|If > 0, then all rendering will be suppressed.  This is a performance improvement used when many cells are being bulk updated, like during a paste operation|
 |evenRowBackgroundColor|string|#e0e0e0|no|no|The background color to use for even-numbered rows|
 |oddRowBackgroundColor|string|#bbb|no|no|The background color to use for odd-numbered rows|
 |highlightRowKey|string|widgetId|no|no|The key to be inspected in the object returned from rowGetter().  If that key value matches the highlightRowValue prop then the row will be a highlighted row|
 |highlightRowValue|any|id_1|no|no|The value to be checked for in the row to see if this row should be a highlighted row|
 |highlightRowColor|string|#00ffff|no|no|The background color to use for highlighted row(s).  If not defined, then color #b3e5fc will be used|
 
-<h3>\<Column\></h3>
+<h3>&lt;Column&gt;</h3>
 
 This component is used to define a column in the table.
 <h5>Example:</h5>
@@ -76,7 +76,7 @@ This component is used to define a column in the table.
 |header|element|<Cell>Spend</Cell>|yes|no|The header cell to apply to this column|
 |cell|element|({ rowData, columnKey, ...props }) => (<Cell {...props}>Spend: { rowData[columnKey] }</Cell>|yes|yes|The cell to apply for regular rows in this column|
 
-<h3>\<ColumnGroup\></h3>
+<h3>&lt;ColumnGroup&gt;</h3>
 
 This component is used to define a column in the table.
 <h5>Example:</h5>
@@ -92,7 +92,7 @@ This component is used to define a column in the table.
 |header|element|<Cell>Spend</Cell>|no|no|The header cell to apply to this column group|
 |hidden|bool|true|no|no|If true, then hide this column group but render vertical space for it|
 
-<h3>\<Cell\></h3>
+<h3>&lt;Cell&gt;</h3>
 
 This is the base cell component for cells in the table.
 <h5>Example:</h5>
@@ -113,7 +113,7 @@ This is the base cell component for cells in the table.
 |style|func OR object|{ fontSize: '14px' }|no|no|Style to use for this cell.  If style should vary based on rowIndex or columnKey, then implement a function and it will be called with (rowData, rowIndex, columnKey)|
 |mountRenderDelay|number|50|no|no|A delay timeout in msec between cell mount and when the cell contents are rendered.  Useful if your cell is expensive to render as this can help avoid rendering you cell while the user is scrolling past it|
 
-<h3>\<ClipboardHelper\></h3>
+<h3>&lt;ClipboardHelper&gt;</h3>
 
 This is a non-rendering helper component which can handle copy/paste messages
 <h5>Example:</h5>
@@ -137,7 +137,7 @@ This is a non-rendering helper component which can handle copy/paste messages
 |pushBulkUpdate|func|() => this.setState({ bulk: this.state.bulk + 1 })|no|no|If defined, this callback will be called when a bulk paste operation begins.  You should use this to send performingBulkUpdate to the VirtualizedDataTable for performance reasons on paste|
 |popBulkUpdate|func|() => this.setState({ bulk: this.state.bulk - 1 })|no|no|If defined, this callback will be called when a bulk paste operation ends.  You should use this to send performingBulkUpdate to the VirtualizedDataTable for performance reasons on paste|
 
-<h3>\<KeyHandler\></h3>
+<h3>&lt;KeyHandler&gtl</h3>
 
 This is a non-rendering helper component which can handle keyboard messages
 <h5>Example:</h5>
