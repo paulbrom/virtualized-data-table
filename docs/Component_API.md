@@ -1,5 +1,7 @@
 # Virtualized Data Table Component Documentation
 
+Note that in the below documentation, "In FxDT" means "In Fixed-Data-Table"
+
 <h3>Table of contents</h3>
 
 * **[&lt;VirtualizedDataTable&gt;](#VirtualizedDataTable)**
@@ -59,7 +61,8 @@ This is the core table component which supports Fixed Data Table style propertie
 |<sub>highlightRowColor</sub>|<sub>string</sub>|<sub>#00ffff</sub>|<sub>no</sub>|<sub>no</sub>|<sub>The background color to use for highlighted row(s).  If not defined, then color #b3e5fc will be used</sub>|
 
 
-### &lt;Column&gt; <a name="Column"></a>
+<a name="Column"></a>
+### &lt;Column&gt;
 
 This component is used to define a column in the table.
 <h5>Example:</h5>
@@ -78,7 +81,8 @@ This component is used to define a column in the table.
 |<sub>cell</sub>|<sub>element</sub>|<sub>({ rowData, columnKey, ...props }) => (<Cell {...props}>Spend: { rowData[columnKey] }</Cell></sub>|<sub>yes</sub>|<sub>yes</sub>|<sub>The cell to apply for regular rows in this column</sub>|
 
 
-### &lt;ColumnGroup&gt; <a name="ColumnGroup"></a>
+<a name="ColumnGroup"></a>
+### &lt;ColumnGroup&gt;
 
 This component is used to define a column in the table.
 <h5>Example:</h5>
@@ -95,7 +99,8 @@ This component is used to define a column in the table.
 |<sub>hidden</sub>|<sub>bool</sub>|<sub>true</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If true, then hide this column group but render vertical space for it</sub>|
 
 
-### &lt;Cell&gt; <a name="Cell"></a>
+<a name="Cell"></a>
+### &lt;Cell&gt;
 
 This is the base cell component for cells in the table.
 <h5>Example:</h5>
@@ -117,7 +122,8 @@ This is the base cell component for cells in the table.
 |<sub>mountRenderDelay</sub>|<sub>number</sub>|<sub>50</sub>|<sub>no</sub>|<sub>no</sub>|<sub>A delay timeout in msec between cell mount and when the cell contents are rendered.  Useful if your cell is expensive to render as this can help avoid rendering you cell while the user is scrolling past it</sub>|
 
 
-### &lt;ClipboardHelper&gt; <a name="ClipboardHelper"></a>
+<a name="ClipboardHelper"></a>
+### &lt;ClipboardHelper&gt;
 
 This is a non-rendering helper component which can handle copy/paste messages
 <h5>Example:</h5>
@@ -142,7 +148,8 @@ This is a non-rendering helper component which can handle copy/paste messages
 |<sub>popBulkUpdate</sub>|<sub>func</sub>|<sub>() => this.setState({ bulk: this.state.bulk - 1 })</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If defined, this callback will be called when a bulk paste operation ends.  You should use this to send performingBulkUpdate to the VirtualizedDataTable for performance reasons on paste</sub>|
 
 
-### &lt;KeyHandler&gt; <a name="KeyHandler"></a>
+<a name="KeyHandler"></a>
+### &lt;KeyHandler&gt;
 
 This is a non-rendering helper component which can handle keyboard messages
 <h5>Example:</h5>
