@@ -22,7 +22,7 @@ This is the core table component which supports Fixed Data Table style propertie
 
 <h5>Properties:</h5>
 
-|Property Name|Data Type|Example Value|In Fixed-Data-Table?|Required?|Description|
+|<sub>Property Name</sub>|<sub>Data Type</sub>|<sub>Example Value</sub>|<sub>In Fixed-Data-Table?</sub>|<sub>Required?</sub>|<sub>Description</sub>|
 |:-----------:|:-------:|:-----------:|:------------------:|:-------:|:---------:|
 |<sub>rowCount</sub>|<sub>number</sub>|<sub>4</sub>|<sub>no</sub>|<sub>Either rowCount or rowsCount must be defined</sub>|<sub>The number of rows in the table</sub>|
 |<sub>rowsCount</sub>|<sub>number</sub>|<sub>4</sub>|<sub>yes</sub>|<sub>Either rowCount or rowsCount must be defined</sub>|<sub>The number of rows in the table</sub>|
@@ -69,12 +69,12 @@ This component is used to define a column in the table.
 
 <h5>Properties:</h5>
 
-|Property Name|Data Type|Example Value|In Fixed-Data-Table?|Required?|Description|
+|<sub>Property Name</sub>|<sub>Data Type</sub>|<sub>Example Value</sub>|<sub>In Fixed-Data-Table?</sub>|<sub>Required?</sub>|<sub>Description</sub>|
 |:-----------:|:-------:|:-----------:|:------------------:|:-------:|:---------:|
-|columnKey|string|spendColumn|yes|yes|The key to associate with this column, which will appear in callbacks associated with this column|
-|width|number|100|yes|yes|The width of this column|
-|header|element|<Cell>Spend</Cell>|yes|no|The header cell to apply to this column|
-|cell|element|({ rowData, columnKey, ...props }) => (<Cell {...props}>Spend: { rowData[columnKey] }</Cell>|yes|yes|The cell to apply for regular rows in this column|
+|<sub>columnKey</sub>|<sub>string</sub>|<sub>spendColumn</sub>|<sub>yes</sub>|<sub>yes</sub>|<sub>The key to associate with this column, which will appear in callbacks associated with this column</sub>|
+|<sub>width</sub>|<sub>number</sub>|<sub>100</sub>|<sub>yes</sub>|<sub>yes</sub>|<sub>The width of this column</sub>|
+|<sub>header</sub>|<sub>element</sub>|<sub><Cell>Spend</Cell></sub>|<sub>yes</sub>|<sub>no</sub>|<sub>The header cell to apply to this column</sub>|
+|<sub>cell</sub>|<sub>element</sub>|<sub>({ rowData, columnKey, ...props }) => (<Cell {...props}>Spend: { rowData[columnKey] }</Cell></sub>|<sub>yes</sub>|<sub>yes</sub>|<sub>The cell to apply for regular rows in this column</sub>|
 
 <h3>&lt;ColumnGroup&gt;</h3>
 
@@ -87,10 +87,10 @@ This component is used to define a column in the table.
 
 <h5>Properties:</h5>
 
-|Property Name|Data Type|Example Value|In Fixed-Data-Table?|Required?|Description|
+|<sub>Property Name</sub>|<sub>Data Type</sub>|<sub>Example Value</sub>|<sub>In Fixed-Data-Table?</sub>|<sub>Required?</sub>|<sub>Description</sub>|
 |:-----------:|:-------:|:-----------:|:------------------:|:-------:|:---------:|
-|header|element|<Cell>Spend</Cell>|no|no|The header cell to apply to this column group|
-|hidden|bool|true|no|no|If true, then hide this column group but render vertical space for it|
+|<sub>header</sub>|<sub>element</sub>|<sub><Cell>Spend</Cell></sub>|<sub>no</sub>|<sub>no</sub>|<sub>The header cell to apply to this column group</sub>|
+|<sub>hidden</sub>|<sub>bool</sub>|<sub>true</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If true, then hide this column group but render vertical space for it</sub>|
 
 <h3>&lt;Cell&gt;</h3>
 
@@ -103,15 +103,15 @@ This is the base cell component for cells in the table.
 
 <h5>Properties:</h5>
 
-|Property Name|Data Type|Example Value|In Fixed-Data-Table?|Required?|Description|
+|<sub>Property Name</sub>|<sub>Data Type</sub>|<sub>Example Value</sub>|<sub>In Fixed-Data-Table?</sub>|<sub>Required?</sub>|<sub>Description</sub>|
 |:-----------:|:-------:|:-----------:|:------------------:|:-------:|:---------:|
-|allowOverflow|bool|true|no|no|If true, then contents of the cell will not be clipped to the cell boundary|
-|className|string|my-cool-cell|no|no|A CSS class name to assign to this cell|
-|onClick|func|(evt, rowData rowIndex, columnKey) => { ... do something ... }|no|no|Callback for clicks in this cell|
-|onMouseEnter|func|(evt, rowData rowIndex, columnKey) => { ... do something ... }|no|no|Callback for mouseEnter event in this cell|
-|onMouseLeave|func|(evt, rowData rowIndex, columnKey) => { ... do something ... }|no|no|Callback for mouseLeave event in this cell|
-|style|func OR object|{ fontSize: '14px' }|no|no|Style to use for this cell.  If style should vary based on rowIndex or columnKey, then implement a function and it will be called with (rowData, rowIndex, columnKey)|
-|mountRenderDelay|number|50|no|no|A delay timeout in msec between cell mount and when the cell contents are rendered.  Useful if your cell is expensive to render as this can help avoid rendering you cell while the user is scrolling past it|
+|<sub>allowOverflow</sub>|<sub>bool</sub>|<sub>true</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If true, then contents of the cell will not be clipped to the cell boundary</sub>|
+|<sub>className</sub>|<sub>string</sub>|<sub>my-cool-cell</sub>|<sub>no</sub>|<sub>no</sub>|<sub>A CSS class name to assign to this cell</sub>|
+|<sub>onClick</sub>|<sub>func</sub>|<sub>(evt, rowData rowIndex, columnKey) => { ... do something ... }</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Callback for clicks in this cell</sub>|
+|<sub>onMouseEnter</sub>|<sub>func</sub>|<sub>(evt, rowData rowIndex, columnKey) => { ... do something ... }</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Callback for mouseEnter event in this cell</sub>|
+|<sub>onMouseLeave</sub>|<sub>func</sub>|<sub>(evt, rowData rowIndex, columnKey) => { ... do something ... }</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Callback for mouseLeave event in this cell</sub>|
+|<sub>style</sub>|<sub>func OR object</sub>|<sub>{ fontSize: '14px' }</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Style to use for this cell.  If style should vary based on rowIndex or columnKey, then implement a function and it will be called with (rowData, rowIndex, columnKey)</sub>|
+|<sub>mountRenderDelay</sub>|<sub>number</sub>|<sub>50</sub>|<sub>no</sub>|<sub>no</sub>|<sub>A delay timeout in msec between cell mount and when the cell contents are rendered.  Useful if your cell is expensive to render as this can help avoid rendering you cell while the user is scrolling past it</sub>|
 
 <h3>&lt;ClipboardHelper&gt;</h3>
 
@@ -124,18 +124,18 @@ This is a non-rendering helper component which can handle copy/paste messages
 
 <h5>Properties:</h5>
 
-|Property Name|Data Type|Example Value|In Fixed-Data-Table?|Required?|Description|
+|<sub>Property Name</sub>|<sub>Data Type</sub>|<sub>Example Value</sub>|<sub>In Fixed-Data-Table?</sub>|<sub>Required?</sub>|<sub>Description</sub>|<sub>
 |:-----------:|:-------:|:-----------:|:------------------:|:-------:|:---------:|
-|onCopy|func|(evt) => { ... add data to evt clipboard ... }|no|no|Called when a clipboard copy operation happens|
-|onCut|func|(evt) => { ... add data to evt clipboard ... }|no|no|Called when a clipboard cut operation happens|
-|onPaste|func|(evt) => { ... do something with evt clipboard ... }|no|no|Called when a clipboard paste operation happens|
-|getInputRef|func|() => this._gridRef;|no|no|If defined, it returns a reference to a React component which needs to contain the clipboard event target in order for the component to issue the onCut/onCopy/onPaste events|
-|allowInputCutCopy|bool|true|no|no|If true, allow cut/copy from input DOM elements|
-|allowEditableCutCopy|bool|true|no|no|If true, allow cut/copy from editable DOM elements|
-|allowInputPaste|bool|true|no|no|If true, allow paste to input DOM elements|
-|allowEditablePaste|bool|true|no|no|If true, allow paste to editable DOM elements|
-|pushBulkUpdate|func|() => this.setState({ bulk: this.state.bulk + 1 })|no|no|If defined, this callback will be called when a bulk paste operation begins.  You should use this to send performingBulkUpdate to the VirtualizedDataTable for performance reasons on paste|
-|popBulkUpdate|func|() => this.setState({ bulk: this.state.bulk - 1 })|no|no|If defined, this callback will be called when a bulk paste operation ends.  You should use this to send performingBulkUpdate to the VirtualizedDataTable for performance reasons on paste|
+|<sub>onCopy</sub>|<sub>func</sub>|<sub>(evt) => { ... add data to evt clipboard ... }</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Called when a clipboard copy operation happens</sub>|
+|<sub>onCut</sub>|<sub>func</sub>|<sub>(evt) => { ... add data to evt clipboard ... }</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Called when a clipboard cut operation happens</sub>|
+|<sub>onPaste</sub>|<sub>func</sub>|<sub>(evt) => { ... do something with evt clipboard ... }</sub>|<sub>no</sub>|<sub>no</sub>|<sub>Called when a clipboard paste operation happens</sub>|
+|<sub>getInputRef</sub>|<sub>func</sub>|<sub>() => this._gridRef;</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If defined, it returns a reference to a React component which needs to contain the clipboard event target in order for the component to issue the onCut/onCopy/onPaste events</sub>|
+|<sub>allowInputCutCopy</sub>|<sub>bool</sub>|<sub>true</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If true, allow cut/copy from input DOM elements</sub>|
+|<sub>allowEditableCutCopy</sub>|<sub>bool</sub>|<sub>true</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If true, allow cut/copy from editable DOM elements</sub>|
+|<sub>allowInputPaste</sub>|<sub>bool</sub>|<sub>true</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If true, allow paste to input DOM elements</sub>|
+|<sub>allowEditablePaste</sub>|<sub>bool</sub>|<sub>true</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If true, allow paste to editable DOM elements</sub>|
+|<sub>pushBulkUpdate</sub>|<sub>func</sub>|<sub>() => this.setState({ bulk: this.state.bulk + 1 })</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If defined, this callback will be called when a bulk paste operation begins.  You should use this to send performingBulkUpdate to the VirtualizedDataTable for performance reasons on paste</sub>|
+|<sub>popBulkUpdate</sub>|<sub>func</sub>|<sub>() => this.setState({ bulk: this.state.bulk - 1 })</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If defined, this callback will be called when a bulk paste operation ends.  You should use this to send performingBulkUpdate to the VirtualizedDataTable for performance reasons on paste</sub>|
 
 <h3>&lt;KeyHandler&gtl</h3>
 
@@ -148,9 +148,9 @@ This is a non-rendering helper component which can handle keyboard messages
 
 <h5>Properties:</h5>
 
-|Property Name|Data Type|Example Value|In Fixed-Data-Table?|Required?|Description|
+|<sub>Property Name</sub>|<sub>Data Type</sub>|<sub>Example Value</sub>|<sub>In Fixed-Data-Table?</sub>|<sub>Required?</sub>|<sub>Description</sub>|<sub>
 |:-----------:|:-------:|:-----------:|:------------------:|:-------:|:---------:|
-|keys|array of strings|['ArrowUp', 'ArrowDown']|no|no|If provided, only handle key events for the given key codes|
-|onKey|func|(evt) => { ... do something with this key event ... }|no|yes|called when a keyboard event occurs
-|ignoreInput|bool|true|no|no|if true, ignore keyboard events coming from input DOM elements|
-|getInputRef|func|() => this._keySrcRef;|no|no|If defined, then only consider key events coming from within the React component returned from this callback|
+|<sub>keys</sub>|<sub>array of strings</sub>|<sub>['ArrowUp', 'ArrowDown']</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If provided, only handle key events for the given key codes</sub>|
+|<sub>onKey</sub>|<sub>func</sub>|<sub>(evt) => { ... do something with this key event ... }</sub>|<sub>no</sub>|<sub>yes</sub>|<sub>called when a keyboard event occurs|
+|<sub>ignoreInput</sub>|<sub>bool</sub>|<sub>true</sub>|<sub>no</sub>|<sub>no</sub>|<sub>if true, ignore keyboard events coming from input DOM elements</sub>|
+|<sub>getInputRef</sub>|<sub>func</sub>|<sub>() => this._keySrcRef;</sub>|<sub>no</sub>|<sub>no</sub>|<sub>If defined, then only consider key events coming from within the React component returned from this callback</sub>|
