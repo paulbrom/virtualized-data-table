@@ -183,7 +183,8 @@ class VirtualizedDataTable extends Component {
 
       this.prvRecentScroll = true;
     } catch (e) {
-      // ignore scroll errors, sometimes we may have findDOMNode errors coming from React due to the vagarities of mounting/unounting
+      // ignore scroll errors, sometimes we may have findDOMNode errors coming from React due to the
+      // vagarities of mounting/unounting
     }
   }
 
