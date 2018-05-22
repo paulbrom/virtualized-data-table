@@ -1,6 +1,6 @@
 {
   "name": "virtualized-data-table",
-  "version": "0.9.9-3",
+  "version": "0.9.9-31",
   "description": "A re-implementation of fixed-data-table using react-virtualized",
   "main": "dist/index.js",
   "scripts": {

@@ -158,29 +158,33 @@ class VirtualizedDataTable extends Component {
   // of the grids.  Once Chrome or React fixes this issue, we should switch to use MultiGrid and
   // stop directly setting transforms here
   prvHandleScroll({ scrollLeft }) {
-    const transformStyle = `translate(-${scrollLeft}px, 0px)`;
-    const groupHeader = ReactDOM.findDOMNode(this.prvGroupHeader); // eslint-disable-line max-len, react/no-find-dom-node
-    if (groupHeader) {
-      groupHeader.style.transform = transformStyle;
-    }
-    const headerGrid = ReactDOM.findDOMNode(this.prvHeaderGrid); // eslint-disable-line max-len, react/no-find-dom-node
-    if (headerGrid) {
-      headerGrid.style.transform = transformStyle;
-    } else if (this.prvHeaderGrid && this.prvHeaderGrid._scrollingContainer) { // eslint-disable-line max-len, no-underscore-dangle
-      this.prvHeaderGrid._scrollingContainer.style.transform = transformStyle; // eslint-disable-line max-len, no-underscore-dangle
-    }
-
-    if (this.prvScrollTimeout) {
-      window.clearTimeout(this.prvScrollTimeout);
-    }
-    this.prvScrollTimeout = window.setTimeout(() => {
-      if (this.prvCellGrid) {
-        // this force update seems necessary to ensure we handle clicks after scroll
-        this.prvCellGrid.forceUpdate();
+    try {
+      const transformStyle = `translate(-${scrollLeft}px, 0px)`;
+      const groupHeader = ReactDOM.findDOMNode(this.prvGroupHeader); // eslint-disable-line max-len, react/no-find-dom-node
+      if (groupHeader) {
+        groupHeader.style.transform = transformStyle;
       }
-    }, 100);
+      const headerGrid = ReactDOM.findDOMNode(this.prvHeaderGrid); // eslint-disable-line max-len, react/no-find-dom-node
+      if (headerGrid) {
+        headerGrid.style.transform = transformStyle;
+      } else if (this.prvHeaderGrid && this.prvHeaderGrid._scrollingContainer) { // eslint-disable-line max-len, no-underscore-dangle
+        this.prvHeaderGrid._scrollingContainer.style.transform = transformStyle; // eslint-disable-line max-len, no-underscore-dangle
+      }
 
-    this.prvRecentScroll = true;
+      if (this.prvScrollTimeout) {
+        window.clearTimeout(this.prvScrollTimeout);
+      }
+      this.prvScrollTimeout = window.setTimeout(() => {
+        if (this.prvCellGrid) {
+          // this force update seems necessary to ensure we handle clicks after scroll
+          this.prvCellGrid.forceUpdate();
+        }
+      }, 100);
+
+      this.prvRecentScroll = true;
+    } catch (e) {
+      // ignore scroll errors, sometimes we may have findDOMNode errors coming from React due to the vagarities of mounting/unounting
+    }
   }
 
   // handles clicking in the Grid
