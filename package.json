@@ -1,6 +1,6 @@
 {
   "name": "virtualized-data-table",
-  "version": "0.9.9-2",
+  "version": "0.9.9-3",
   "description": "A re-implementation of fixed-data-table using react-virtualized",
   "main": "dist/index.js",
   "scripts": {
@@ -57,6 +57,7 @@
     "prop-types": "^15.6.0",
     "react": "^16.3.0",
     "react-addons-shallow-compare": "^15.4.2",
+    "react-delay": "^0.1.0",
     "react-dom": "^16.3.0",
     "react-draggable": "^3.0.5",
     "react-virtualized": "^9.18.5",

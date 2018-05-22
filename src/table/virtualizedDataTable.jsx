@@ -5,6 +5,7 @@ import { List as list, fromJS } from 'immutable';
 import { Grid } from 'react-virtualized';
 import Draggable from 'react-draggable';
 import shallowCompare from 'react-addons-shallow-compare';
+import Delay from 'react-delay';
 import _ from 'lodash';
 import Cell from './cell';
 import Column from './column';
@@ -1039,25 +1040,27 @@ class VirtualizedDataTable extends Component {
         />
       ) : null;
       const resizer = isResizable ? (
-        <Draggable
-          ref={(draggable) => { this.prvDragRefs[columnKey] = draggable; }}
-          axis="x"
-          zIndex={999999}
-          bounds={{ left: -(cellWidth - 2) }}
-          onStart={this.prvHandleResizeDragStart(columnKey, cellWidth)}
-          onStop={this.prvHandleResizeDragStop}
-        >
-          <div
-            style={_.assign({}, styles.resizer, {
-              height: cellHeight,
-              backgroundColor: resizerBackground,
-            })}
-            onMouseEnter={this.prvHandleResizeMouseEnter(columnKey)}
-            onMouseLeave={this.prvHandleResizeMouseLeave(columnKey)}
+        <Delay wait={250}>
+          <Draggable
+            ref={(draggable) => { this.prvDragRefs[columnKey] = draggable; }}
+            axis="x"
+            zIndex={999999}
+            bounds={{ left: -(cellWidth - 2) }}
+            onStart={this.prvHandleResizeDragStart(columnKey, cellWidth)}
+            onStop={this.prvHandleResizeDragStop}
           >
-            {tallDragLine}
-          </div>
-        </Draggable>
+            <div
+              style={_.assign({}, styles.resizer, {
+                height: cellHeight,
+                backgroundColor: resizerBackground,
+              })}
+              onMouseEnter={this.prvHandleResizeMouseEnter(columnKey)}
+              onMouseLeave={this.prvHandleResizeMouseLeave(columnKey)}
+            >
+              {tallDragLine}
+            </div>
+          </Draggable>
+        </Delay>
       ) : null;
       const cellStyle = resizeDrag ? _.assign({}, cell.props.style, {
         pointerEvents: 'none', // performance fix when dragging over header
@@ -1564,7 +1567,7 @@ VirtualizedDataTable.propTypes = {
   columnWidth: PropTypes.number,
 };
 
-VirtualizedDataTable.propTypes = _.assign({}, Grid.propTypes, VirtualizedDataTable.propTypes);
+VirtualizedDataTable.propTypes = _.assign({}, _.omit(Grid.propTypes, ['columnCount']), VirtualizedDataTable.propTypes);
 
 VirtualizedDataTable.defaultProps = Grid.defaultProps;
 
