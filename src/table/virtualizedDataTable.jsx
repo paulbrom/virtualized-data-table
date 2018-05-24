@@ -1409,7 +1409,12 @@ class VirtualizedDataTable extends Component {
       );
     };
 
-    if ((scrollToRow === undefined) || (scrollToColumn === undefined)) {
+    if (
+      (scrollToRow === undefined) ||
+      (scrollToColumn === undefined) ||
+      (scrollToRow === -1) ||
+      (scrollToColumn === -1)
+    ) {
       if (arrowSelectionRange) {
         // ensure active part of arrow selection is within scroll view
         scrollToRow = ((arrowSelectionRange.get(ROW_START) < focusedCell.rowIndex) ?
