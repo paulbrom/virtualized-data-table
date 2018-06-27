@@ -20,6 +20,8 @@ const COLUMN_END = 'columnEnd';
 
 const DEFAULT_HIGHLIGHT_ROW_COLOR = '#B3E5FC';
 
+export const IGNORE_EVENT = 'ignore-event';
+
 // this is an implementation of a react-virtualized table that is styled like a fixed-data-table,
 // and supports column resizability using the same callbacks as fixed-data-table
 class VirtualizedDataTable extends Component {
@@ -203,9 +205,17 @@ class VirtualizedDataTable extends Component {
         allowMultiSelect,
         onSelectionChange,
         onCellClick,
+        rowCount,
+        rowsCount,
       } = this.props;
+      const rowCountUse = _.isNumber(rowCount) ? rowCount : rowsCount;
       let { focusedCell, selectionRanges } = this.state;
       let claimedFocus = false;
+
+      if (rowCountUse <= rowIndex) {
+        return;
+      }
+
       if (!evt.shiftKey && onCellClick) {
         claimedFocus = onCellClick({
           evt,
@@ -214,7 +224,9 @@ class VirtualizedDataTable extends Component {
           columnKey,
           rowData,
         });
-        if (claimedFocus) {
+        if (claimedFocus === IGNORE_EVENT) {
+          return;
+        } else if (claimedFocus) {
           const cellRef = this.prvCellRefs[`${rowIndex}_${columnKey}`];
           if (cellRef && _.isFunction(cellRef.claimFocus)) {
             cellRef.claimFocus();

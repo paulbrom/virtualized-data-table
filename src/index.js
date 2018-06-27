@@ -4,7 +4,7 @@ import ClipboardHandler from './utils/clipboardHelper';
 import Column from './table/column';
 import ColumnGroup from './table/columnGroup';
 import KeyHandler from './utils/keyHandler';
-import VirtualizedDataTable from './table/virtualizedDataTable';
+import VirtualizedDataTable, { IGNORE_EVENT } from './table/virtualizedDataTable';
 
 const overrideGridCSS = (noOutline, css) => {
   const noOutlineCSS = noOutline ? `
@@ -32,6 +32,7 @@ export {
   KeyHandler,
   VirtualizedDataTable,
   overrideGridCSS,
+  IGNORE_EVENT,
 };
 
 export default VirtualizedDataTable;
