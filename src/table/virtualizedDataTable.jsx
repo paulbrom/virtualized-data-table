@@ -80,6 +80,8 @@ class VirtualizedDataTable extends Component {
       if (this.prvDragRefs[refName]) {
         this.prvDragRefs[refName].setState({
           dragging: false,
+          x: 0,
+          y: 0,
           clientX: 0,
           clientY: 0,
         });
