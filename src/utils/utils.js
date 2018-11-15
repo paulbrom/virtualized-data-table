@@ -12,8 +12,8 @@ const isInput = (elem, orEditable = true) => {
     return editable && (editable !== 'inherit');
   };
   return elem && (
-    (elem.tagName === 'INPUT') ||
-    (elem.tagName === 'TEXTAREA') ||
+    ((elem.tagName === 'INPUT') && elem.ownerDocument.activeElement === elem) ||
+    ((elem.tagName === 'TEXTAREA') && elem.ownerDocument.activeElement === elem) ||
     (elem.getAttribute('role') === 'menuitem') ||
     (orEditable && isContentEditable())
   );

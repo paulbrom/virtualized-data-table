@@ -1484,6 +1484,8 @@ class VirtualizedDataTable extends Component {
         getInputRef={() => this.prvCellGrid}
         allowInputCutCopy={false}
         allowEditableCutCopy={false}
+        allowInputPaste={false}
+        allowEditablePaste={false}
       />
     ) : null;
 
