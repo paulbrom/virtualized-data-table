@@ -89,9 +89,9 @@ class ClipboardHelper extends Component {
 
   prvHandlePaste(evt) {
     const { onPaste, pushBulkUpdate, popBulkUpdate } = this.props;
-    if (onPaste && this.prvEventTargetIsRefDescendant(evt, false /* isCutCopy */)) {
+    if (onPaste) {
       pushBulkUpdate();
-      onPaste(evt);
+      onPaste(evt, this.prvEventTargetIsRefDescendant(evt, false /* isCutCopy */));
       popBulkUpdate();
     }
   }

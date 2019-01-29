@@ -626,12 +626,19 @@ class VirtualizedDataTable extends Component {
     });
   }
 
-  prvHandlePaste(evt) {
+  prvHandlePaste(evt, evtTargetIsRefDescendant) {
     if (evt.clipboardData) {
-      evt.stopPropagation();
-      evt.preventDefault();
-
       this.prvRecentScroll = false;
+
+      let stoppedDefaultEventHandling = false;
+      const ensureStopDefaultEventHandling = () => {
+        if (!stoppedDefaultEventHandling) {
+          stoppedDefaultEventHandling = true;
+
+          evt.stopPropagation();
+          evt.preventDefault();
+        }
+      };
 
       const { onCellPaste } = this.props;
       const selectionRangesToUse = this.prvGetSelectionRangesForCopyPaste(true /* forPaste */);
@@ -672,44 +679,48 @@ class VirtualizedDataTable extends Component {
                 _.each(pasteRows, (pasteRowCur, pasteRowIndex) => {
                   const pasteColumns = pasteRowCur.querySelectorAll('td');
                   const inMultiCellPaste = (pasteRows.length > 1) || (pasteColumns.length > 1);
-                  _.each(pasteColumns, (pasteColumnCur, pasteColumnIndex) => {
-                    // these while loops handle duplication of the current row/column in the
-                    // paste data (see above)
-                    let rowIndex = rowStart + pasteRowIndex;
-                    while (
-                      rowIndex <= ((rowEnd === -1) ?
-                        (rowStart + (pasteRows.length - 1)) :
-                        rowEnd)
-                    ) {
-                      let columnIndex = columnStart + pasteColumnIndex;
+                  if (evtTargetIsRefDescendant || inMultiCellPaste) {
+                    ensureStopDefaultEventHandling();
+
+                    _.each(pasteColumns, (pasteColumnCur, pasteColumnIndex) => {
+                      // these while loops handle duplication of the current row/column in the
+                      // paste data (see above)
+                      let rowIndex = rowStart + pasteRowIndex;
                       while (
-                        columnIndex <= ((columnEnd === -1) ?
-                          (columnStart + (pasteColumns.length - 1)) :
-                          columnEnd)
+                        rowIndex <= ((rowEnd === -1) ?
+                          (rowStart + (pasteRows.length - 1)) :
+                          rowEnd)
                       ) {
-                        const { columnKey } = this.prvColumnInfo[columnIndex];
-                        const cellText = pasteColumnCur.innerText;
-                        // if we have a valid cell ref, then try to call setValue on it. Otherwise,
-                        // call onCellPaste on the parent to paste the copy data
-                        const cellRef = this.prvCellRefs[`${rowIndex}_${columnKey}`];
-                        if (cellRef && _.isFunction(cellRef.setValue)) {
-                          cellRef.setValue(cellText, inMultiCellPaste);
-                        } else {
-                          onCellPaste({
-                            rowIndex,
-                            columnIndex,
-                            columnKey,
-                            inMultiCellPaste,
-                            text: cellText,
-                          });
+                        let columnIndex = columnStart + pasteColumnIndex;
+                        while (
+                          columnIndex <= ((columnEnd === -1) ?
+                            (columnStart + (pasteColumns.length - 1)) :
+                            columnEnd)
+                        ) {
+                          const { columnKey } = this.prvColumnInfo[columnIndex];
+                          const cellText = pasteColumnCur.innerText;
+                          // if we have a valid cell ref, then try to call setValue on it.
+                          // Otherwise, call onCellPaste on the parent to paste the copy data
+                          const cellRef = this.prvCellRefs[`${rowIndex}_${columnKey}`];
+                          if (cellRef && _.isFunction(cellRef.setValue)) {
+                            cellRef.setValue(cellText, inMultiCellPaste);
+                          } else {
+                            onCellPaste({
+                              rowIndex,
+                              columnIndex,
+                              columnKey,
+                              inMultiCellPaste,
+                              text: cellText,
+                            });
+                          }
+                          // see if we should duplicate this column into the current selection
+                          columnIndex += pasteColumns.length;
                         }
-                        // see if we should duplicate this column into the current selection
-                        columnIndex += pasteColumns.length;
+                        // see if we should duplicate this row into the current selection
+                        rowIndex += pasteRows.length;
                       }
-                      // see if we should duplicate this row into the current selection
-                      rowIndex += pasteRows.length;
-                    }
-                  });
+                    });
+                  }
                 });
               }
             });
@@ -723,7 +734,9 @@ class VirtualizedDataTable extends Component {
         }
       }
 
-      if (!html) {
+      if (evtTargetIsRefDescendant && !html) {
+        ensureStopDefaultEventHandling();
+
         // no HTML data, unparseable html data, or not a table.  Take the paste data as
         // plain text and blit it into every cell of all selections
         const text = evt.clipboardData.getData('text/plain');
