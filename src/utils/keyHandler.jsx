@@ -59,9 +59,14 @@ class KeyHandler extends Component {
       return;
     }
 
-    if ((!keys || keys.includes(evt.code)) &&
-      (!ignoreInput || !(evt.target instanceof window.HTMLElement) || !isInput(evt.target)) &&
-      (this.prvEventTargetIsRefDescendant(evt) || (evt.target === document.body))) {
+    const shouldHandleKey = !keys || keys.includes(evt.code);
+    const keyNotInInput = (
+      !ignoreInput ||
+      !(evt.target instanceof window.HTMLElement) ||
+      !isInput(evt.target)
+    );
+    const targetInTable = this.prvEventTargetIsRefDescendant(evt) || (evt.target === document.body);
+    if ((shouldHandleKey && keyNotInInput && targetInTable) || (which === 13)) {
       onKey(evt);
     }
   }
