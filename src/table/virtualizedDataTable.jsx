@@ -1249,6 +1249,7 @@ class VirtualizedDataTable extends Component {
 
   render() {
     const {
+      className,
       children,
       rowCount,
       rowsCount,
@@ -1503,7 +1504,10 @@ class VirtualizedDataTable extends Component {
     ) : null;
 
     return (
-      <div style={_.assign({}, styles.outerDiv, style)}>
+      <div
+        className={className}
+        style={_.assign({}, styles.outerDiv, style)}
+      >
         {clipboardHelper}
         <KeyHandler
           keys={keysToSniff}
@@ -1564,6 +1568,7 @@ class VirtualizedDataTable extends Component {
 }
 
 VirtualizedDataTable.propTypes = {
+  className: PropTypes.string,
   children: PropTypes.oneOfType([ // from react
     PropTypes.arrayOf(PropTypes.node),
     PropTypes.node,
