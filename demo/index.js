@@ -35408,7 +35408,7 @@ function (_Component) {
       _this[refName] = grid;
 
       if (grid) {
-        _this.prvRecomputeTablesBouncy();
+        _this.prvRecomputeTables();
       }
     });
 
@@ -35482,7 +35482,7 @@ function (_Component) {
         onColumnResizeEndCallback(newColumnWidth, dragColumn);
       }
 
-      _this.prvRecomputeTablesBouncy();
+      _this.prvRecomputeTables();
 
       _this.setState({
         resizeDrag: null,
@@ -36540,7 +36540,7 @@ function (_Component) {
         });
       }
 
-      this.prvRecomputeTablesBouncy();
+      this.prvRecomputeTables();
     }
   }, {
     key: "componentWillUnmount",
