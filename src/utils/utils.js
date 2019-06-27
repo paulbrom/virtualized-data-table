@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _isFunction from 'lodash/isFunction';
 
 /**
  * utility method to determine if the given element is an input element or an 'editable' element
@@ -8,7 +8,7 @@ import _ from 'lodash';
  */
 const isInput = (elem, orEditable = true) => {
   const isContentEditable = () => {
-    const editable = elem.contentEditable || (_.isFunction(elem.getAttribute) && elem.getAttribute('contenteditable'));
+    const editable = elem.contentEditable || (_isFunction(elem.getAttribute) && elem.getAttribute('contenteditable'));
     return editable && (editable !== 'inherit');
   };
   return elem && (

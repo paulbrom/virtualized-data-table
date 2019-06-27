@@ -1,23 +1,27 @@
 /* eslint react/jsx-filename-extension: "off" */
-import React, { Component } from 'react';
+/* eslint react/jsx-one-expression-per-line: "off" */
+/* eslint react/no-multi-comp: "off" */
+import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import { render } from 'react-dom';
-import _ from 'lodash';
+import _times from 'lodash/times';
 import {
   VirtualizedDataTable,
   Column,
   Cell,
   overrideGridCSS,
-} from './../index';
+} from '../index';
 
 const ROW_COUNT = 100;
 const COLUMN_1 = 'Col-1';
 const COLUMN_2 = 'Col-2';
 const COLUMN_3 = 'Col-3';
+const COLUMN_4 = 'Col-4';
 const COLUMN_KEYS = [
   COLUMN_1,
   COLUMN_2,
   COLUMN_3,
+  COLUMN_4,
 ];
 
 const generateGUID = () => {
@@ -32,78 +36,84 @@ const generateGUID = () => {
   return retGUID;
 };
 
-const dataArray = _.map(Array(ROW_COUNT), () =>
-  _.reduce(COLUMN_KEYS, (columnCur, keyCur) => {
-    const columnRet = columnCur;
-    columnRet[keyCur] = generateGUID();
-    return columnRet;
-  }, {}));
+const dataArray = _times(ROW_COUNT).map(() => (
+  COLUMN_KEYS.reduce((columnCur, keyCur) => {
+    columnCur[keyCur] = generateGUID(); // eslint-disable-line no-param-reassign
+    return columnCur;
+  }, {})
+));
 const getRowDataFromDataArray = ({ index }) => dataArray[index];
 
-const MyCustomCell = (props) => {
-  const { rowData, columnKey } = props;
-  return (
-    <Cell
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        height: '100%',
-        background: 'yellow',
-        color: 'red',
-        fontStyle: 'italic',
-      }}
-    >
-      My custom cell has data: { rowData[columnKey] }
-    </Cell>
-  );
-};
+class MyCustomCell extends PureComponent {
+  static propTypes = {
+    rowData: PropTypes.any, // eslint-disable-line react/forbid-prop-types
+    columnKey: PropTypes.string,
+    backgroundColor: PropTypes.string,
+    textColor: PropTypes.string,
+    leftText: PropTypes.string,
+  };
 
-MyCustomCell.propTypes = {
-  rowData: PropTypes.any, // eslint-disable-line react/forbid-prop-types
-  columnKey: PropTypes.string,
-};
+  static defaultProps = {
+    backgroundColor: 'yellow',
+    textColor: 'red',
+    leftText: 'My custom cell has data:',
+  };
 
-MyCustomCell.defaultProps = {
-  rowData: undefined,
-  columnKey: undefined,
-};
+  render() {
+    const {
+      rowData,
+      columnKey,
+      textColor,
+      backgroundColor,
+      leftText,
+    } = this.props;
+    return (
+      <Cell
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          height: '100%',
+          background: backgroundColor,
+          color: textColor,
+          fontStyle: 'italic',
+        }}
+      >
+        {leftText}&nbsp;
+        {rowData[columnKey]}
+      </Cell>
+    );
+  }
+}
 
-class DemoApp extends Component {
-  constructor(...args) {
-    super(...args);
+class DemoApp extends PureComponent {
+  state = {
+    columnWidths: {
+      [COLUMN_1]: 200,
+      [COLUMN_2]: 500,
+      [COLUMN_3]: 500,
+      [COLUMN_4]: 600,
+    },
+  };
 
-    this.state = {
+  prvColumnResizeEnd = (newWidth, columnKey) => {
+    this.setState(({ columnWidths }) => ({
       columnWidths: {
-        [COLUMN_1]: 200,
-        [COLUMN_2]: 500,
-        [COLUMN_3]: 500,
-      },
-    };
-
-    this.prvColumnResizeEnd = this.prvColumnResizeEnd.bind(this);
-  }
-
-  prvColumnResizeEnd(newWidth, columnKey) {
-    const { columnWidths } = this.state;
-    this.setState({
-      columnWidths: _.assign(columnWidths, {
+        ...columnWidths,
         [columnKey]: newWidth,
-      }),
-    });
-  }
+      },
+    }));
+  };
 
   render() {
     const { columnWidths } = this.state;
-    const tableWidth = _.reduce(columnWidths, (totalWidth, widthCur) =>
-      (totalWidth + widthCur), 0);
-
     return (
       <div>
         {overrideGridCSS(true /* noOutline */)}
         <VirtualizedDataTable
           rowHeight={25}
           rowCount={dataArray.length}
-          width={tableWidth}
+          freezeLeftCount={1}
+          width={1024}
           height={500}
           headerHeight={50}
           rowGetter={getRowDataFromDataArray}
@@ -111,7 +121,7 @@ class DemoApp extends Component {
         >
           <Column
             columnKey={COLUMN_1}
-            header={<Cell>Column 1</Cell>}
+            header={<Cell>Column 1 (frozen)</Cell>}
             cell={<Cell>Column 1 static content</Cell>}
             width={columnWidths[COLUMN_1]}
             isResizable
@@ -133,6 +143,18 @@ class DemoApp extends Component {
             )}
             width={columnWidths[COLUMN_3]}
             isResizable
+          />
+          <Column
+            columnKey={COLUMN_4}
+            header={<Cell>Column 4</Cell>}
+            cell={(
+              <MyCustomCell
+                backgroundColor="blue"
+                textColor="white"
+                leftText="With custom left text and colors:"
+              />
+            )}
+            width={columnWidths[COLUMN_4]}
           />
         </VirtualizedDataTable>
       </div>

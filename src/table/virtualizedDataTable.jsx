@@ -1,17 +1,21 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import { List as list, fromJS } from 'immutable';
-import { Grid } from 'react-virtualized';
-import Draggable from 'react-draggable';
 import shallowCompare from 'react-addons-shallow-compare';
 import Delay from 'react-delay';
-import _ from 'lodash';
+import Draggable from 'react-draggable';
+import { Grid } from 'react-virtualized';
+import _debounce from 'lodash/debounce';
+import _isFunction from 'lodash/isFunction';
+import _isNumber from 'lodash/isNumber';
+import _omit from 'lodash/omit';
 import Cell from './cell';
 import Column from './column';
 import ColumnGroup from './columnGroup';
-import KeyHandler from '../utils/keyHandler';
 import ClipboardHelper from '../utils/clipboardHelper';
+import KeyHandler from '../utils/keyHandler';
+import renderIf from '../utils/renderIf';
 
 const ROW_START = 'rowStart';
 const ROW_END = 'rowEnd';
@@ -22,42 +26,375 @@ const DEFAULT_HIGHLIGHT_ROW_COLOR = '#B3E5FC';
 
 export const IGNORE_EVENT = 'ignore-event';
 
+const KEYS_TO_SNIFF = [
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowUp',
+  'ArrowDown',
+  'Backquote',
+  'Backslash',
+  'Backspace',
+  'BracketLeft',
+  'BracketRight',
+  'Comma',
+  'Delete',
+  'Enter',
+  'Equal',
+  'Escape',
+  'Minus',
+  'Period',
+  'Quote',
+  'Semicolon',
+  'Slash',
+  'Space',
+  'Tab',
+];
+for (let keyOn = 0; keyOn < 10; keyOn += 1) {
+  KEYS_TO_SNIFF.push(`Digit${keyOn}`);
+}
+for (let keyOn = 48; keyOn < 91; keyOn += 1) {
+  KEYS_TO_SNIFF.push(`Key${String.fromCharCode(keyOn)}`);
+}
+
+const STYLES = {
+  outerDiv: {
+    overflow: 'hidden',
+  },
+  table: {
+    WebkitUserSelect: 'none',
+    MozUserSelect: 'none',
+    msUserSelect: 'none',
+    userSelect: 'none',
+  },
+  tableAllowSelect: {},
+  headerTable: {
+    overflow: 'initial',
+    border: 'none',
+    WebkitUserSelect: 'none',
+    MozUserSelect: 'none',
+    msUserSelect: 'none',
+    userSelect: 'none',
+  },
+  tableHeader: {
+    fontSize: 16,
+    borderBottom: '1px solid #d3d3d3',
+    backgroundImage: 'linear-gradient(#fff,#efefef)',
+    padding: 0,
+    margin: 0,
+  },
+  tableGrid: {
+    fontSize: 16,
+  },
+  headerDiv: {
+    display: 'flex',
+    border: '1px solid #d3d3d3',
+    borderBottom: 'none',
+    overflowX: 'hidden',
+    overflowY: 'scroll',
+  },
+  tableDiv: {
+    display: 'flex',
+    border: '1px solid #d3d3d3',
+  },
+  headerCell: {
+    borderRight: '1px solid #d3d3d3',
+    display: 'flex',
+    alignItems: 'center',
+    flexDirection: 'row',
+    fontWeight: 700,
+    backgroundImage: 'linear-gradient(#fff, #efefef)',
+    height: '100%',
+  },
+  tableCell: {
+    borderRight: '1px solid #d3d3d3',
+    display: 'flex',
+    alignItems: 'center',
+    flexDirection: 'row',
+    height: '100%',
+  },
+  evenRows: {
+    background: 'white',
+  },
+  oddRows: {
+    background: '#f6f7f8',
+  },
+  resizer: {
+    cursor: 'ew-resize',
+    position: 'relative',
+    width: 4,
+    left: 'calc(100% - 4px)',
+  },
+  column: {
+    margin: 0,
+    paddingLeft: 10,
+  },
+  lastRow: {
+    borderBottom: '1px solid #d3d3d3',
+  },
+  tallDragLine: {
+    cursor: 'ew-resize',
+    position: 'absolute',
+    marginLeft: 1,
+    width: 2,
+    backgroundColor: 'blue',
+    zIndex: 9999999,
+  },
+  groupHeader: {
+    display: 'flex',
+    flexDirection: 'row',
+  },
+  groupOuter: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
+    paddingLeft: 16,
+    paddingRight: 16,
+    flexGrow: 0,
+    flexShrink: 0,
+    background: 'linear-gradient(#fff,#efefef)',
+    border: '1px solid #d3d3d3',
+    borderBottom: 'none',
+  },
+  hiddenGroupOuter: {
+    background: 'transparent',
+    border: 'none',
+  },
+  groupFarOuter: {
+    overflow: 'hidden',
+  },
+};
+
 // this is an implementation of a react-virtualized table that is styled like a fixed-data-table,
 // and supports column resizability using the same callbacks as fixed-data-table
 class VirtualizedDataTable extends Component {
-  constructor() {
-    super();
+  static propTypes = {
+    className: PropTypes.string,
+    children: PropTypes.oneOfType([ // from react
+      PropTypes.arrayOf(PropTypes.node),
+      PropTypes.node,
+    ]),
+    rowCount: PropTypes.number,
+    rowsCount: PropTypes.number,
+    rowGetter: PropTypes.func.isRequired,
+    height: PropTypes.number.isRequired,
+    width: PropTypes.number.isRequired,
+    style: PropTypes.object, // eslint-disable-line react/forbid-prop-types
+    rowHeight: PropTypes.number.isRequired,
+    headerHeight: PropTypes.number.isRequired,
+    groupHeaderHeight: PropTypes.number,
+    onColumnResizeEndCallback: PropTypes.func,
+    freezeLeftCount: PropTypes.number,
+    constrainWidth: PropTypes.bool,
+    noHeaderScroll: PropTypes.bool,
+    allowRowSelect: PropTypes.bool,
+    allowMultiSelect: PropTypes.bool,
+    allowRangeSelect: PropTypes.bool,
+    selectionStyle: PropTypes.object, // eslint-disable-line react/forbid-prop-types
+    focusStyle: PropTypes.object, // eslint-disable-line react/forbid-prop-types
+    canSelectColumn: PropTypes.func,
+    canSelectRow: PropTypes.func,
+    onSelectionChange: PropTypes.func,
+    onCellClick: PropTypes.func,
+    onCellDoubleClick: PropTypes.func,
+    onCellHover: PropTypes.func,
+    onCellFocus: PropTypes.func,
+    onCellCut: PropTypes.func,
+    onCellCopy: PropTypes.func,
+    onCellPaste: PropTypes.func,
+    scrollToColumn: PropTypes.number,
+    scrollToRow: PropTypes.number,
+    shouldHandleKeyEvent: PropTypes.func,
+    performingBulkUpdate: PropTypes.number,
+    evenRowBackgroundColor: PropTypes.string,
+    oddRowBackgroundColor: PropTypes.string,
+    highlightRowValue: PropTypes.any, // eslint-disable-line react/forbid-prop-types
+    highlightRowKey: PropTypes.string,
+    highlightRowColor: PropTypes.string,
+    wheelDelta: PropTypes.number,
+  };
 
-    this.state = {
-      recentDragEnd: null,
-      resizeHover: null,
-      resizeDrag: null,
-      selectionRanges: list(),
-      arrowSelectionRange: null,
-      focusedCell: {
-        rowIndex: -1,
-        columnIndex: -1,
-      },
-      editMode: false,
+  static defaultProps = {
+    freezeLeftCount: 0,
+    wheelDelta: 20,
+  };
+
+  static getDerivedStateFromProps({
+    children,
+    constrainWidth,
+    freezeLeftCount,
+    gridStyle,
+    groupHeaderHeight,
+    headerHeight,
+    headerStyle,
+    height,
+    onCellCopy,
+    onCellCut,
+    onCellPaste,
+    rowCount,
+    rowsCount,
+    rowHeight,
+    width: widthRaw,
+  }) {
+    const rowCountUse = _isNumber(rowCount) ? rowCount : rowsCount;
+    const useDefaultClipboard = !(onCellCut || onCellCopy || onCellPaste);
+    const width = constrainWidth ? widthRaw : widthRaw - 2;
+    const tableProps = {
+      rowHeight,
+      headerHeight,
+      width,
     };
+
+    const tableStyle = (constrainWidth ? {
+      ...(useDefaultClipboard ? STYLES.tableAllowSelect : STYLES.table),
+      width,
+    } : STYLES.table);
+
+    // ensure we will draw blank rows in the gap between height and the final renderable
+    // row by calculating the number of rows needed to fill the available space and setting
+    // the row count to that value
+    const rowCountWithEmptySpace = Math.max(
+      Math.floor((height - headerHeight) / rowHeight),
+      rowCountUse,
+    );
+
+    const columnInfo = [];
+    const groups = [];
+    let columnLeft = 0;
+
+    const calcColumnWidth = (column) => {
+      const { props: { flexGrow, width: columnWidth = 0 } } = column;
+      const isLastColumn = ((columnLeft + columnWidth) >= tableProps.width);
+      // clip the last column slightly to accommodate table borders
+      return flexGrow
+        ? Math.max(tableProps.width - (columnLeft + 2), columnWidth)
+        : columnWidth - (isLastColumn ? 16 : 0);
+    };
+
+    // scan all columns, skipping over any ColumnGroups and directly rendering their column
+    // children
+    React.Children.forEach(children, (child) => {
+      if (child) {
+        const { props: { columnKey: childKey, children: grandChildren }, type: childType } = child;
+        if (childType && ((childType === ColumnGroup) || (childType.name === 'ColumnGroup'))) {
+          let groupWidth = 0;
+
+          React.Children.forEach(grandChildren, (grandChild) => {
+            if (grandChild) {
+              const { props: { columnKey: grandChildKey }, type: grandChildType } = grandChild;
+              if (grandChildType && ((grandChildType !== Column) && (grandChildType.name !== 'Column'))) {
+                throw new Error('unexpected child - only Columns can be children of ColumnGroups!');
+              }
+
+              const grandChildWidth = calcColumnWidth(grandChild);
+              columnInfo.push({
+                tableProps,
+                column: grandChild,
+                columnKey: grandChildKey,
+                columnLeft,
+                width: grandChildWidth,
+              });
+
+              groupWidth += grandChildWidth;
+              columnLeft += grandChildWidth;
+            }
+          });
+
+          groups.push({
+            group: child,
+            groupWidth,
+          });
+        } else if (childType && ((childType === Column) || (childType.name === 'Column'))) {
+          const childWidth = calcColumnWidth(child);
+          columnInfo.push({
+            tableProps,
+            column: child,
+            columnKey: childKey,
+            columnLeft,
+            width: childWidth,
+          });
+
+          columnLeft += childWidth;
+        } else {
+          throw new Error('unexpected child - only Columns or ColumnGroups can be children of VirtualizedDataTable!');
+        }
+      }
+    });
+
+    const freezeWidth = columnInfo.reduce((_freezeWidth, columnCur, columnIdx) =>
+      _freezeWidth + ((columnIdx < freezeLeftCount) ? columnCur.width : 0), 0);
+
+    return {
+      columnInfo,
+      columnLeft,
+      freezeWidth,
+      headerStyle: {
+        ...STYLES.tableHeader,
+        ...(headerStyle || {}),
+      },
+      gridStyle: {
+        ...STYLES.tableGrid,
+        ...(gridStyle || {}),
+      },
+      groupFarOuterStyle: {
+        ...STYLES.groupFarOuter,
+        width,
+      },
+      groupHeaderStyle: {
+        ...STYLES.groupHeader,
+        height: groupHeaderHeight,
+      },
+      groupOuterStyle: {
+        ...STYLES.groupOuter,
+        height: groupHeaderHeight,
+      },
+      groups,
+      rowCount: rowCountUse,
+      rowCountWithEmptySpace,
+      tableStyle,
+      useDefaultClipboard,
+      width,
+    };
+  }
+
+  state = {
+    arrowSelectionRange: null,
+    columnInfo: [],
+    columnLeft: 0,
+    editMode: false,
+    focusedCell: {
+      rowIndex: -1,
+      columnIndex: -1,
+    },
+    freezeWidth: 0,
+    headerStyle: {},
+    gridStyle: {},
+    groups: [],
+    recentDragEnd: null,
+    resizeDrag: null,
+    resizeHover: null,
+    rowCount: 0,
+    rowCountWithEmptySpace: 0,
+    selectionRanges: list(),
+    tableStyle: {},
+    useDefaultClipboard: true,
+    width: 0,
+  };
+
+  constructor(...args) {
+    super(...args);
 
     this.prvCellRefs = {};
     this.prvDragRefs = {};
-    this.prvColumnInfo = [];
+    this.prvCellGridRef = null;
+    this.prvCellGridDOM = null;
+    this.prvCellGridFreezeRef = null;
+    this.prvGroupHeaderRef = null;
+    this.prvHeaderGridRef = null;
+    this.prvHeaderGridFreezeRef = null;
 
-    this.prvHandleResizeMouseEnter = this.prvHandleResizeMouseEnter.bind(this);
-    this.prvHandleResizeMouseLeave = this.prvHandleResizeMouseLeave.bind(this);
-    this.prvHandleResizeDragStart = this.prvHandleResizeDragStart.bind(this);
-    this.prvHandleResizeDragStop = this.prvHandleResizeDragStop.bind(this);
-    this.prvHandleScroll = this.prvHandleScroll.bind(this);
-    this.prvRenderHeaderCell = this.prvRenderHeaderCell.bind(this);
-    this.prvRenderTableCell = this.prvRenderTableCell.bind(this);
-    this.prvHandleCellClick = this.prvHandleCellClick.bind(this);
-    this.prvHandleCellDoubleClick = this.prvHandleCellDoubleClick.bind(this);
-    this.prvHandleCellHover = this.prvHandleCellHover.bind(this);
-    this.prvHandleKeyPress = this.prvHandleKeyPress.bind(this);
-    this.prvHandleCutOrCopy = this.prvHandleCutOrCopy.bind(this);
-    this.prvHandlePaste = this.prvHandlePaste.bind(this);
+    this.prvRecomputeTablesBouncy = _debounce(() => this.prvRecomputeTables(), 50);
   }
 
   /* ------ Lifecycle Methods ------ */
@@ -67,11 +404,9 @@ class VirtualizedDataTable extends Component {
     return !nextProps.performingBulkUpdate && shallowCompare(this, nextProps, nextState);
   }
 
-  componentWillUpdate() {
-    this.prvCellRefs = {};
-  }
-
   componentDidUpdate() {
+    this.prvCellRefs = {};
+
     const { recentDragEnd } = this.state;
     if (recentDragEnd !== null) {
       const refName = recentDragEnd;
@@ -94,32 +429,56 @@ class VirtualizedDataTable extends Component {
       });
     }
 
-    if (this.prvHeaderGrid) {
-      this.prvHeaderGrid.recomputeGridSize();
-    }
-    if (this.prvCellGrid) {
-      this.prvCellGrid.recomputeGridSize();
-    }
+    this.prvRecomputeTables();
+  }
+
+  componentWillUnmount() {
+    this.prvHookGridRef();
   }
 
   /* ------ END Lifecycle Methods ------ */
 
   /* ------ Event handlers ------ */
 
+  prvHookRef = (grid, refName) => {
+    this[refName] = grid;
+    if (grid) {
+      this.prvRecomputeTables();
+    }
+  };
+
+  prvHookGridRef = (cellGrid) => {
+    this.prvHookRef(cellGrid, 'prvCellGridRef');
+
+    const cellGridDOMOld = this.prvCellGridDOM;
+    // eslint-disable-next-line react/no-find-dom-node
+    this.prvCellGridDOM = ReactDOM.findDOMNode(cellGrid);
+
+    if (this.prvCellGridDOM) {
+      this.prvCellGridDOM.addEventListener('wheel', this.prvHandleWheel);
+      this.prvCellGridDOM.addEventListener('mousewheel', this.prvHandleWheel);
+      this.prvCellGridDOM.addEventListener('onmousewheel', this.prvHandleWheel);
+    } else if (cellGridDOMOld) {
+      cellGridDOMOld.removeEventListener('wheel', this.prvHandleWheel);
+      cellGridDOMOld.removeEventListener('mousewheel', this.prvHandleWheel);
+      cellGridDOMOld.removeEventListener('onmousewheel', this.prvHandleWheel);
+    }
+  };
+
   // handles the resizable column mouse enter event
-  prvHandleResizeMouseEnter(columnKey) {
-    return () => {
-      if (!this.state.resizeDrag) {
+  prvHandleResizeMouseEnter = columnKey =>
+    () => {
+      const { resizeDrag } = this.state;
+      if (!resizeDrag) {
         this.setState({
           resizeHover: columnKey,
         });
       }
     };
-  }
 
   // handles the resizable column mouse leave event
-  prvHandleResizeMouseLeave(columnKey) {
-    return () => {
+  prvHandleResizeMouseLeave = columnKey =>
+    () => {
       const { resizeDrag, resizeHover } = this.state;
       if (!resizeDrag && (resizeHover === columnKey)) {
         this.setState({
@@ -127,11 +486,10 @@ class VirtualizedDataTable extends Component {
         });
       }
     };
-  }
 
   // handles the resizable column drag start
-  prvHandleResizeDragStart(columnKey, origWidth) {
-    return (evt) => {
+  prvHandleResizeDragStart = (columnKey, origWidth) =>
+    (evt) => {
       this.setState({
         resizeDrag: {
           dragColumn: columnKey,
@@ -140,48 +498,90 @@ class VirtualizedDataTable extends Component {
         },
       });
     };
-  }
 
   // handles the resizable column drag end
-  prvHandleResizeDragStop(evt) {
+  prvHandleResizeDragStop = (evt) => {
+    const { onColumnResizeEndCallback } = this.props;
     const { resizeDrag: { dragColumn, dragStart, origWidth } } = this.state;
     const newColumnWidth = origWidth + (evt.clientX - dragStart);
     if (newColumnWidth > 0) {
-      this.props.onColumnResizeEndCallback(newColumnWidth, dragColumn);
+      onColumnResizeEndCallback(newColumnWidth, dragColumn);
     }
+
+    this.prvRecomputeTables();
 
     this.setState({
       resizeDrag: null,
       recentDragEnd: dragColumn,
     });
-  }
+  };
+
+  // handles mouse wheel.
+  prvHandleWheel = (evt) => {
+    if (this.prvCellGridDOM) {
+      evt.preventDefault();
+
+      const { wheelDelta } = this.props;
+      const { state: { scrollTop, scrollLeft } } = this.prvCellGridRef;
+      const delta = evt.deltaY || evt.detail || evt.wheelDelta;
+      const newScrollTop = Math.max(0, scrollTop + ((delta > 0) ? wheelDelta : -wheelDelta));
+      this.prvCellGridDOM.scrollTop = newScrollTop;
+
+      this.prvCellGridRef.handleScrollEvent({
+        scrollLeft,
+        scrollTop: newScrollTop,
+      });
+    }
+  };
 
   // handles scrolling in the Grid
   // TODO: we are compensating for a bug in Chrome or React where issuing a React update cycle
   // (setState) under a scroll event can cause laggy scroll performance, and temporary misalignment
   // of the grids.  Once Chrome or React fixes this issue, we should switch to use MultiGrid and
   // stop directly setting transforms here
-  prvHandleScroll({ scrollLeft }) {
+  prvHandleScroll = ({ scrollLeft, scrollTop }) => {
     try {
-      const transformStyle = `translate(-${scrollLeft}px, 0px)`;
-      const groupHeader = ReactDOM.findDOMNode(this.prvGroupHeader); // eslint-disable-line max-len, react/no-find-dom-node
-      if (groupHeader) {
-        groupHeader.style.transform = transformStyle;
-      }
-      const headerGrid = ReactDOM.findDOMNode(this.prvHeaderGrid); // eslint-disable-line max-len, react/no-find-dom-node
-      if (headerGrid) {
-        headerGrid.style.transform = transformStyle;
-      } else if (this.prvHeaderGrid && this.prvHeaderGrid._scrollingContainer) { // eslint-disable-line max-len, no-underscore-dangle
-        this.prvHeaderGrid._scrollingContainer.style.transform = transformStyle; // eslint-disable-line max-len, no-underscore-dangle
-      }
+      const handleLeft = () => {
+        const transformStyle = `translate(-${scrollLeft}px, 0px)`;
+        const groupHeader = ReactDOM.findDOMNode(this.prvGroupHeaderRef); // eslint-disable-line max-len, react/no-find-dom-node
+        if (groupHeader) {
+          groupHeader.style.transform = transformStyle;
+        }
+        const headerGrid = ReactDOM.findDOMNode(this.prvHeaderGridRef); // eslint-disable-line max-len, react/no-find-dom-node
+        if (headerGrid) {
+          headerGrid.style.transform = transformStyle;
+        } else if (this.prvHeaderGridRef && this.prvHeaderGridRef._scrollingContainer) { // eslint-disable-line max-len, no-underscore-dangle
+          this.prvHeaderGridRef._scrollingContainer.style.transform = transformStyle; // eslint-disable-line max-len, no-underscore-dangle
+        }
+      };
+
+      const handleTop = () => {
+        if (this.prvCellGridFreezeRef) {
+          this.prvCellGridFreezeRef.setState({ scrollTop });
+
+          const transformStyle = `translate(0px, -${scrollTop}px)`;
+          const freezeGrid = ReactDOM.findDOMNode(this.prvCellGridFreezeRef); // eslint-disable-line max-len, react/no-find-dom-node
+          if (freezeGrid) {
+            freezeGrid.style.transform = transformStyle;
+          } else if (this.prvCellGridFreezeRef && this.prvCellGridFreezeRef._scrollingContainer) { // eslint-disable-line max-len, no-underscore-dangle
+            this.prvCellGridFreezeRef._scrollingContainer.style.transform = transformStyle; // eslint-disable-line max-len, no-underscore-dangle
+          }
+        }
+      };
+
+      handleLeft();
+      handleTop();
 
       if (this.prvScrollTimeout) {
         window.clearTimeout(this.prvScrollTimeout);
       }
       this.prvScrollTimeout = window.setTimeout(() => {
-        if (this.prvCellGrid) {
-          // this force update seems necessary to ensure we handle clicks after scroll
-          this.prvCellGrid.forceUpdate();
+        // this force update seems necessary to ensure we handle clicks after scroll
+        if (this.prvCellGridRef) {
+          this.prvCellGridRef.forceUpdate();
+        }
+        if (this.prvCellGridFreezeRef) {
+          this.prvCellGridFreezeRef.forceUpdate();
         }
       }, 100);
 
@@ -190,31 +590,29 @@ class VirtualizedDataTable extends Component {
       // ignore scroll errors, sometimes we may have findDOMNode errors coming from React due to the
       // vagarities of mounting/unounting
     }
-  }
+  };
 
   // handles clicking in the Grid
-  prvHandleCellClick({
+  prvHandleCellClick = ({
     rowIndex,
     columnIndex,
     columnKey,
     columnCount,
     rowData,
-  }) {
-    return (evt) => {
+  }) =>
+    (evt) => {
       const {
         allowRowSelect,
         allowRangeSelect,
         allowMultiSelect,
         onSelectionChange,
         onCellClick,
-        rowCount,
-        rowsCount,
       } = this.props;
-      const rowCountUse = _.isNumber(rowCount) ? rowCount : rowsCount;
+      const { rowCount } = this.state;
       let { focusedCell, selectionRanges } = this.state;
       let claimedFocus = false;
 
-      if (rowCountUse <= rowIndex) {
+      if (rowCount <= rowIndex) {
         return;
       }
 
@@ -228,9 +626,10 @@ class VirtualizedDataTable extends Component {
         });
         if (claimedFocus === IGNORE_EVENT) {
           return;
-        } else if (claimedFocus) {
+        }
+        if (claimedFocus) {
           const cellRef = this.prvCellRefs[`${rowIndex}_${columnKey}`];
-          if (cellRef && _.isFunction(cellRef.claimFocus)) {
+          if (cellRef && _isFunction(cellRef.claimFocus)) {
             cellRef.claimFocus();
           }
         }
@@ -342,16 +741,15 @@ class VirtualizedDataTable extends Component {
         editMode: claimedFocus,
       });
     };
-  }
 
   // handles double-clicking in the Grid
-  prvHandleCellDoubleClick({
+  prvHandleCellDoubleClick = ({
     rowIndex,
     columnIndex,
     columnKey,
     rowData,
-  }) {
-    return (evt) => {
+  }) =>
+    (evt) => {
       this.prvRecentScroll = false;
 
       const { onCellDoubleClick } = this.props;
@@ -365,15 +763,14 @@ class VirtualizedDataTable extends Component {
         });
       }
     };
-  }
 
-  prvHandleCellHover({
+  prvHandleCellHover = ({
     rowIndex,
     columnIndex,
     columnKey,
     rowData,
-  }) {
-    return (evt) => {
+  }) =>
+    (evt) => {
       const { onCellHover } = this.props;
       if (onCellHover) {
         onCellHover({
@@ -385,10 +782,9 @@ class VirtualizedDataTable extends Component {
         });
       }
     };
-  }
 
   // handles arrow and other keypresses
-  prvHandleKeyPress(evt) {
+  prvHandleKeyPress = (evt) => {
     const { shouldHandleKeyEvent } = this.props;
     if (shouldHandleKeyEvent && !shouldHandleKeyEvent(evt)) {
       return;
@@ -431,9 +827,11 @@ class VirtualizedDataTable extends Component {
     }
 
     if ((rowIndex > -1) && (columnIndex > -1)) {
-      const { rowCount, rowsCount } = this.props;
-      const rowCountUse = _.isNumber(rowCount) ? rowCount : rowsCount;
-      const { columnCount } = this.prvCellGrid.props;
+      const { rowCount } = this.state;
+      const columnCount = (
+        (this.prvCellGridRef ? this.prvCellGridRef.props.columnCount : 0) +
+        (this.prvCellGridFreezeRef ? this.prvCellGridFreezeRef.props.columnCount : 0)
+      );
 
       switch (evt.code) {
         case 'ArrowDown':
@@ -471,7 +869,7 @@ class VirtualizedDataTable extends Component {
             editMode = true;
           } else {
             editMode = false;
-            if (rowIndex < rowCountUse - 1) {
+            if (rowIndex < rowCount - 1) {
               rowIndex += 1;
             }
           }
@@ -493,7 +891,6 @@ class VirtualizedDataTable extends Component {
         default:
           if (evt.ctrlKey || evt.metaKey) {
             // this is probably a control key sequence not meant for us to handle
-
             return;
           }
 
@@ -512,7 +909,7 @@ class VirtualizedDataTable extends Component {
       }
 
       if (!editMode &&
-        (rowIndex < rowCountUse) && (rowIndex >= 0) &&
+        (rowIndex < rowCount) && (rowIndex >= 0) &&
         (columnIndex < columnCount) && (columnIndex >= 0)) {
         // we plan to handle this key.  Don't propagate
         evt.stopPropagation();
@@ -557,13 +954,14 @@ class VirtualizedDataTable extends Component {
         editMode,
       });
     }
-  }
+  };
 
   // handles cut or copy requests
-  prvHandleCutOrCopy(isCut) {
-    return ((evt) => {
+  prvHandleCutOrCopy = isCut =>
+    (evt) => {
       if (evt.clipboardData) {
         const { onCellCut, onCellCopy, rowGetter } = this.props;
+        const { columnInfo } = this.state;
         const tabChar = String.fromCharCode(9);
         const selectionRangeToUse = this.prvGetSelectionRangesForCopyPaste(false /* forPaste */)
           .last();
@@ -581,19 +979,19 @@ class VirtualizedDataTable extends Component {
           for (let rowIndex = rowStart; rowIndex <= rowEnd; rowIndex += 1) {
             const rowData = rowGetter({ index: rowIndex });
             for (let columnIndex = columnStart; columnIndex <= columnEnd; columnIndex += 1) {
-              const { columnKey } = this.prvColumnInfo[columnIndex];
+              const { columnKey } = columnInfo[columnIndex];
               const cellFunc = isCut ? onCellCut : onCellCopy;
               const cellRef = this.prvCellRefs[`${rowIndex}_${columnKey}`];
               // if we have a valid cell ref, then try to call getValue/clearValue on it.
               // Otherwise, call onCellCut or onCellCopy on the parent to paste the copy data
-              const cellData = (cellRef && _.isFunction(cellRef.getValue)) ? cellRef.getValue() :
+              const cellData = (cellRef && _isFunction(cellRef.getValue)) ? cellRef.getValue() :
                 cellFunc({
                   rowIndex,
                   columnIndex,
                   columnKey,
                   rowData,
                 });
-              if (isCut && cellRef && _.isFunction(cellRef.clearValue)) {
+              if (isCut && cellRef && _isFunction(cellRef.clearValue)) {
                 cellRef.clearValue();
               }
               dataArr.push(cellData);
@@ -603,7 +1001,7 @@ class VirtualizedDataTable extends Component {
           // generate table markup, in the form of a <table> (HTML) or tab & crlf delimited table
           // (plain text).  This matches behavior of Google Sheets, which puts a table on the HTML
           // clipboard and a tab/crlf delimited table on the plain text clipboard
-          const tableMarkup = _.reduce(dataArr, (tableMarkupCur, dataCur, dataIdx) => {
+          const tableMarkup = dataArr.reduce((tableMarkupCur, dataCur, dataIdx) => {
             const tableMarkupRet = tableMarkupCur;
             // need a row delimiter?
             if (dataIdx && !(dataIdx % selectionColumnCount)) {
@@ -623,10 +1021,9 @@ class VirtualizedDataTable extends Component {
           evt.clipboardData.setData('text/plain', tableMarkup.text);
         }
       }
-    });
-  }
+    };
 
-  prvHandlePaste(evt, evtTargetIsRefDescendant) {
+  prvHandlePaste = (evt, evtTargetIsRefDescendant) => {
     if (evt.clipboardData) {
       this.prvRecentScroll = false;
 
@@ -641,6 +1038,7 @@ class VirtualizedDataTable extends Component {
       };
 
       const { onCellPaste } = this.props;
+      const { columnInfo } = this.state;
       const selectionRangesToUse = this.prvGetSelectionRangesForCopyPaste(true /* forPaste */);
       let html = evt.clipboardData.getData('text/html');
       if (html) {
@@ -676,13 +1074,13 @@ class VirtualizedDataTable extends Component {
               const columnEnd = selectionCur.get(COLUMN_END);
               if (rowStart > -1) {
                 const pasteRows = table.querySelectorAll('tr');
-                _.each(pasteRows, (pasteRowCur, pasteRowIndex) => {
+                pasteRows.forEach((pasteRowCur, pasteRowIndex) => {
                   const pasteColumns = pasteRowCur.querySelectorAll('td');
                   const inMultiCellPaste = (pasteRows.length > 1) || (pasteColumns.length > 1);
                   if (evtTargetIsRefDescendant || inMultiCellPaste) {
                     ensureStopDefaultEventHandling();
 
-                    _.each(pasteColumns, (pasteColumnCur, pasteColumnIndex) => {
+                    pasteColumns.forEach((pasteColumnCur, pasteColumnIndex) => {
                       // these while loops handle duplication of the current row/column in the
                       // paste data (see above)
                       let rowIndex = rowStart + pasteRowIndex;
@@ -697,12 +1095,12 @@ class VirtualizedDataTable extends Component {
                             (columnStart + (pasteColumns.length - 1)) :
                             columnEnd)
                         ) {
-                          const { columnKey } = this.prvColumnInfo[columnIndex];
+                          const { columnKey } = columnInfo[columnIndex];
                           const cellText = pasteColumnCur.innerText;
                           // if we have a valid cell ref, then try to call setValue on it.
                           // Otherwise, call onCellPaste on the parent to paste the copy data
                           const cellRef = this.prvCellRefs[`${rowIndex}_${columnKey}`];
-                          if (cellRef && _.isFunction(cellRef.setValue)) {
+                          if (cellRef && _isFunction(cellRef.setValue)) {
                             cellRef.setValue(cellText, inMultiCellPaste);
                           } else {
                             onCellPaste({
@@ -745,10 +1143,11 @@ class VirtualizedDataTable extends Component {
         }
       }
     }
-  }
+  };
 
-  prvBlitTextIntoSelectedCells(text) {
+  prvBlitTextIntoSelectedCells = (text) => {
     const { onCellPaste } = this.props;
+    const { columnInfo } = this.state;
     const selectionRangesToUse = this.prvGetSelectionRangesForCopyPaste(true /* forPaste */);
     selectionRangesToUse.forEach((selectionCur) => {
       const rowStart = selectionCur.get(ROW_START);
@@ -766,11 +1165,11 @@ class VirtualizedDataTable extends Component {
           columnIndex <= ((columnEnd === -1) ? columnStart : columnEnd);
           columnIndex += 1
         ) {
-          const { columnKey } = this.prvColumnInfo[columnIndex];
+          const { columnKey } = columnInfo[columnIndex];
           // if we have a valid cell ref, then try to call setValue on it. Otherwise, call
           // onCellPaste on the parent to paste the copy data
           const cellRef = this.prvCellRefs[`${rowIndex}_${columnKey}`];
-          if (cellRef && _.isFunction(cellRef.setValue)) {
+          if (cellRef && _isFunction(cellRef.setValue)) {
             cellRef.setValue(text, true /* inMultiCellPaste */);
           } else {
             onCellPaste({
@@ -783,24 +1182,24 @@ class VirtualizedDataTable extends Component {
         }
       }
     });
-  }
+  };
 
   /* ------ END Event Handlers ------ */
 
   /* ------ Selection Range Management Methods ------ */
 
   // issues a focus change to the table, based on keyboard selections
-  prvFocusCell(rowIndex, columnIndex, evt) {
+  prvFocusCell = (rowIndex, columnIndex, evt) => {
     const { onCellFocus, rowGetter } = this.props;
     if (onCellFocus) {
       // releaseFocus() is needed because the onCellFocus() call in many table implementations
       // modifies state in a way that prevents the normal saving of data upon focus release, so we
       // force the cell to handle the focus release
-      const { focusedCell } = this.state;
+      const { columnInfo, focusedCell } = this.state;
       if ((focusedCell.rowIndex > -1) && (focusedCell.columnIndex > -1)) {
-        const { columnKey } = this.prvColumnInfo[focusedCell.columnIndex];
+        const { columnKey } = columnInfo[focusedCell.columnIndex];
         const cellRef = this.prvCellRefs[`${focusedCell.rowIndex}_${columnKey}`];
-        if (cellRef && _.isFunction(cellRef.releaseFocus)) {
+        if (cellRef && _isFunction(cellRef.releaseFocus)) {
           cellRef.releaseFocus();
         }
       }
@@ -810,18 +1209,17 @@ class VirtualizedDataTable extends Component {
         rowData,
         rowIndex,
         columnIndex,
-        columnKey: ((columnIndex > -1) ?
-          this.prvColumnInfo[columnIndex].columnKey : null),
+        columnKey: ((columnIndex > -1) ? columnInfo[columnIndex].columnKey : null),
         evt,
       });
     }
 
     return false;
-  }
+  };
 
   // this method uses the canSelectRow function provided by the user of this table to determine
   // if all the selection ranges are valid, and removes rows which are not valid to select
-  prvValidateSelectionRanges(selectionRanges) {
+  prvValidateSelectionRanges = (selectionRanges) => {
     const { canSelectRow, canSelectColumn } = this.props;
     return selectionRanges.reduce((validatedRanges, rangeCur) => {
       let validatedRangesRet = validatedRanges;
@@ -867,13 +1265,13 @@ class VirtualizedDataTable extends Component {
 
       return validatedRangesRet;
     }, list());
-  }
+  };
 
   // this method takes a range of selections and consolidates them into a minimal set of ranges
   // for example, if we have a range to select rows 1-3, another range to select row 4, and
   // another range to select rows 6-7, then the end result of this function should be a range to
   // select rows 1-4 and another range to select rows 6-7
-  prvConsolidateRowRanges(selectionRanges) { // eslint-disable-line class-methods-use-this
+  prvConsolidateRowRanges = (selectionRanges) => {
     let nextRangeToPush = null;
     return selectionRanges.size ? selectionRanges
       .sortBy(rangeCur => rangeCur.get(ROW_START))
@@ -895,12 +1293,12 @@ class VirtualizedDataTable extends Component {
         return consolidatedRangesRet;
       }, list())
       .push(nextRangeToPush) : selectionRanges;
-  }
+  };
 
   // this method takes a range of selections and eliminates any ranges which are subsets of
   // other ranges
-  prvConsolidateContainedRanges(selectionRanges) { // eslint-disable-line class-methods-use-this
-    return selectionRanges.reduce((consolidatedRanges, range1) => {
+  prvConsolidateContainedRanges = selectionRanges =>
+    selectionRanges.reduce((consolidatedRanges, range1) => {
       const isContainedByOtherRange = selectionRanges
         .reduce((isContainedByOtherRangeRet, range2) => (
           isContainedByOtherRangeRet ||
@@ -912,10 +1310,9 @@ class VirtualizedDataTable extends Component {
         ), false);
       return isContainedByOtherRange ? consolidatedRanges : consolidatedRanges.push(range1);
     }, list());
-  }
 
   // this method gets the range(s) to be used for copy or paste.
-  prvGetSelectionRangesForCopyPaste(forPaste) {
+  prvGetSelectionRangesForCopyPaste = (forPaste) => {
     // where to cut/copy/paste from or to?  use the arrow selection range first, if it exists.
     // Otherwise, use the mouse selection ranges, if any exist.  Finally, try the focused cell,
     // if it exists.  This behavior appears to match Google Sheets' logic for finding the
@@ -932,226 +1329,139 @@ class VirtualizedDataTable extends Component {
         [COLUMN_END]: forPaste ? -1 : focusedCell.columnIndex,
       }])
     );
-  }
+  };
 
   /* ------ END Selection Range Management Methods ------ */
 
   /* ------ Rendering Methods ------ */
 
-  prvGetStyles() { // eslint-disable-line class-methods-use-this
-    return {
-      outerDiv: {
-        overflow: 'hidden',
-      },
-      table: {
-        WebkitUserSelect: 'none',
-        MozUserSelect: 'none',
-        msUserSelect: 'none',
-        userSelect: 'none',
-      },
-      tableAllowSelect: {
-      },
-      headerTable: {
-        overflow: 'hidden',
-        border: 'none',
-        WebkitUserSelect: 'none',
-        MozUserSelect: 'none',
-        msUserSelect: 'none',
-        userSelect: 'none',
-      },
-      tableHeader: {
-        fontSize: 16,
-        borderBottom: '1px solid #d3d3d3',
-        backgroundImage: 'linear-gradient(#fff,#efefef)',
-        padding: 0,
-        margin: 0,
-      },
-      tableGrid: {
-        fontSize: 16,
-      },
-      headerDiv: {
-        border: '1px solid #d3d3d3',
-        borderBottom: 'none',
-        overflowX: 'hidden',
-        overflowY: 'scroll',
-      },
-      tableDiv: {
-        border: '1px solid #d3d3d3',
-      },
-      headerCell: {
-        borderRight: '1px solid #d3d3d3',
-        display: 'flex',
-        alignItems: 'center',
-        flexDirection: 'row',
-        fontWeight: 700,
-        backgroundImage: 'linear-gradient(#fff, #efefef)',
-        height: '100%',
-      },
-      tableCell: {
-        borderRight: '1px solid #d3d3d3',
-        display: 'flex',
-        alignItems: 'center',
-        flexDirection: 'row',
-        height: '100%',
-      },
-      evenRows: {
-        background: 'white',
-      },
-      oddRows: {
-        background: '#f6f7f8',
-      },
-      resizer: {
-        cursor: 'ew-resize',
-        position: 'relative',
-        width: 4,
-        left: 'calc(100% - 4px)',
-      },
-      column: {
-        margin: 0,
-        paddingLeft: 10,
-      },
-      lastRow: {
-        borderBottom: '1px solid #d3d3d3',
-      },
-      tallDragLine: {
-        cursor: 'ew-resize',
-        position: 'absolute',
-        marginLeft: 1,
-        width: 2,
-        backgroundColor: 'blue',
-        zIndex: 9999999,
-      },
-      groupHeader: {
-        display: 'flex',
-        flexDirection: 'row',
-      },
-      groupOuter: {
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        fontSize: 16,
-        fontWeight: 'bold',
-        paddingLeft: 16,
-        paddingRight: 16,
-        flexGrow: 0,
-        flexShrink: 0,
-        background: 'linear-gradient(#fff,#efefef)',
-        border: '1px solid #d3d3d3',
-        borderBottom: 'none',
-      },
-      hiddenGroupOuter: {
-        background: 'transparent',
-        border: 'none',
-      },
-      groupFarOuter: {
-        overflow: 'hidden',
-      },
+  prvRecomputeTables = () => {
+    const recomputeTable = (grid, forceOverflowInitial) => {
+      if (grid) {
+        grid.recomputeGridSize();
+        if (forceOverflowInitial) {
+          // eslint-disable-next-line react/no-find-dom-node
+          const domGrid = ReactDOM.findDOMNode(grid);
+          if (domGrid) {
+            domGrid.style.overflow = 'initial';
+          }
+        }
+      }
     };
-  }
+
+    recomputeTable(this.prvHeaderGridRef, true /* forceOverflowInitial */);
+    recomputeTable(this.prvHeaderGridFreezeRef, true /* forceOverflowInitial */);
+    recomputeTable(this.prvCellGridRef);
+    recomputeTable(this.prvCellGridFreezeRef, true /* forceOverflowInitial */);
+  };
 
   // this method renders a single header cell, with the resize drag line, if desired
-  prvRenderHeaderCell({
+  prvRenderHeaderCell = ({
     cell,
     cellWidth,
     cellHeight,
     isResizable,
-  }) {
-    return (props) => {
-      const styles = this.prvGetStyles();
-      const { resizeHover, resizeDrag } = this.state;
+  }) =>
+    (props) => {
+      const { height } = this.props;
+      const { resizeDrag, resizeHover } = this.state;
       const { columnKey } = props; // eslint-disable-line react/prop-types
       const isResizing = (resizeDrag && (resizeDrag.dragColumn === columnKey));
       const resizerBackground = (
         ((resizeHover === columnKey) && !isResizing) ? 'blue' : 'transparent'
       );
-      const tallDragLine = isResizing ? (
-        <div
-          style={_.assign({}, styles.tallDragLine, {
-            height: this.props.height,
-          })}
-        />
-      ) : null;
-      const resizer = isResizable ? (
-        <Delay wait={250}>
-          <Draggable
-            ref={(draggable) => { this.prvDragRefs[columnKey] = draggable; }}
-            axis="x"
-            zIndex={999999}
-            bounds={{ left: -(cellWidth - 2) }}
-            onStart={this.prvHandleResizeDragStart(columnKey, cellWidth)}
-            onStop={this.prvHandleResizeDragStop}
-          >
-            <div
-              style={_.assign({}, styles.resizer, {
-                height: cellHeight,
-                backgroundColor: resizerBackground,
-              })}
-              onMouseEnter={this.prvHandleResizeMouseEnter(columnKey)}
-              onMouseLeave={this.prvHandleResizeMouseLeave(columnKey)}
-            >
-              {tallDragLine}
-            </div>
-          </Draggable>
-        </Delay>
-      ) : null;
-      const cellStyle = resizeDrag ? _.assign({}, cell.props.style, {
+      const { props: cellProps } = cell;
+      const { style: cellStyleRaw } = cellProps;
+      const cellStyle = resizeDrag ? {
+        ...cellStyleRaw,
         pointerEvents: 'none', // performance fix when dragging over header
-      }) : cell.props.style;
-      const clonedCell = cell ? React.cloneElement(cell, _.assign({}, cell.props, props, {
-        style: cellStyle,
-        columnKey,
-        cellWidth,
-        cellHeight,
-      })) : null;
+      } : cellStyleRaw;
 
       return (
         <div
-          style={_.assign({}, styles.headerCell, {
+          style={{
+            ...STYLES.headerCell,
             height: cellHeight,
-          })}
+          }}
         >
-          {resizer}
-          {clonedCell}
-        </div>
-      );
-    };
-  }
-
-  // this method renders a single table cell in the Grids
-  prvRenderTableCell({
-    cell,
-    cellWidth,
-    cellHeight,
-  }) {
-    return (props) => {
-      const { rowCount, rowsCount, rowGetter } = this.props;
-      const rowCountUse = _.isNumber(rowCount) ? rowCount : rowsCount;
-      const { rowIndex, columnKey } = props; // eslint-disable-line react/prop-types
-      const nonStyleProps = _.omit(props, ['style']);
-      if (rowIndex < rowCountUse) {
-        const styles = this.prvGetStyles();
-        let cellUse = cell;
-        if (_.isFunction(cell)) {
-          const rowData = rowGetter({ index: rowIndex });
-          cellUse = cell({ rowIndex, columnKey, rowData });
-        }
-        const cellStyle = _.isFunction(cellUse.props.style) ?
-          cellUse.props.style({ rowIndex, columnKey }) :
-          cellUse.props.style;
-        const augmentedCell = React.cloneElement(cellUse, _.assign(
-          {},
-          cellUse.props,
-          nonStyleProps, {
-            ref: (cellRef) => { this.prvCellRefs[`${rowIndex}_${columnKey}`] = cellRef; },
+          {renderIf(isResizable, () => (
+            <Delay wait={250}>
+              <Draggable
+                ref={(draggable) => { this.prvDragRefs[columnKey] = draggable; }}
+                axis="x"
+                zIndex={999999}
+                bounds={{ left: -(cellWidth - 2) }}
+                onStart={this.prvHandleResizeDragStart(columnKey, cellWidth)}
+                onStop={this.prvHandleResizeDragStop}
+              >
+                <div
+                  style={{
+                    ...STYLES.resizer,
+                    height: cellHeight,
+                    backgroundColor: resizerBackground,
+                  }}
+                  onMouseEnter={this.prvHandleResizeMouseEnter(columnKey)}
+                  onMouseLeave={this.prvHandleResizeMouseLeave(columnKey)}
+                >
+                  {renderIf(isResizing, () => (
+                    <div
+                      style={{
+                        ...STYLES.tallDragLine,
+                        height,
+                      }}
+                    />
+                  ))}
+                </div>
+              </Draggable>
+            </Delay>
+          ))}
+          {renderIf(cell, () => React.cloneElement(cell, {
+            ...cellProps,
+            ...props,
             style: cellStyle,
             columnKey,
             cellWidth,
             cellHeight,
-          },
-        ));
+          }))}
+        </div>
+      );
+    };
+
+  // this method renders a single table cell in the Grids
+  prvRenderTableCell = ({
+    cell,
+    cellWidth,
+    cellHeight,
+  }) =>
+    (props) => {
+      const { rowGetter } = this.props;
+      const { rowCount } = this.state;
+      const { rowIndex, columnKey } = props; // eslint-disable-line react/prop-types
+      const nonStyleProps = _omit(props, ['style']);
+      if (rowIndex < rowCount) {
+        let cellUse = cell;
+        if (_isFunction(cell)) {
+          const rowData = rowGetter({ index: rowIndex });
+          cellUse = cell({ rowIndex, columnKey, rowData });
+        }
+        const { props: cellProps } = cellUse;
+        const { style: cellStyleRaw } = cellProps;
+        const cellStyle = _isFunction(cellStyleRaw) ?
+          cellStyleRaw({ rowIndex, columnKey }) :
+          cellStyleRaw;
         return (
-          <div style={styles.tableCell}>
-            {augmentedCell}
+          <div style={STYLES.tableCell}>
+            {React.cloneElement(cellUse, {
+              ...cellProps,
+              ...nonStyleProps,
+              ref: (cellRef) => {
+                this.prvCellRefs[`${rowIndex}_${columnKey}`] = cellRef;
+              },
+              style: cellStyle,
+              columnKey,
+              cellWidth,
+              cellHeight,
+            })}
           </div>
         );
       }
@@ -1159,15 +1469,13 @@ class VirtualizedDataTable extends Component {
         <div />
       );
     };
-  }
 
   // this method sets up header + cell renderers for a given column in the Grid
-  prvRenderTableColumn({
+  prvRenderTableColumn = ({
     tableProps,
-    styles,
     column,
     columnLeft,
-  }) {
+  }) => {
     const {
       isResizable,
       cell,
@@ -1177,7 +1485,7 @@ class VirtualizedDataTable extends Component {
     } = column.props;
     const isLastColumn = ((columnLeft + columnProps.width) >= tableProps.width);
     const columnWidth = columnProps.flexGrow ?
-      Math.max(tableProps.width - (columnLeft + 2), columnProps.width) :
+      Math.max(tableProps.width - (columnLeft + 16), columnProps.width) :
       columnProps.width - (isLastColumn ? 16 : 0);
       // clip the last column slightly to accommodate table borders
     const headerRenderer = this.prvRenderHeaderCell({
@@ -1191,214 +1499,89 @@ class VirtualizedDataTable extends Component {
       cellWidth: columnWidth,
       cellHeight: tableProps.rowHeight - 2,
     });
-    return _.assign({}, columnProps, {
+    return {
+      ...columnProps,
       columnKey,
       cellRenderer,
       headerRenderer,
       flexShrink: 0,
-      style: styles.column,
+      style: STYLES.column,
       width: columnWidth,
-    });
-  }
-
-  // this method renders group headers above the header, outside of the Grid (because headers can
-  // span multiple columns, and Grid doesn't support this currently)
-  prvRenderGroupHeaders({
-    width,
-    styles,
-    groups,
-  }) {
-    const { groupHeaderHeight } = this.props;
-    const groupHeaderStyle = _.assign({}, styles.groupHeader, {
-      height: groupHeaderHeight,
-    });
-    const groupFarOuterStyle = _.assign({}, styles.groupFarOuter, {
-      width,
-    });
-    return (
-      <div style={groupFarOuterStyle}>
-        <div
-          ref={(groupHeader) => { this.prvGroupHeader = groupHeader; }}
-          style={groupHeaderStyle}
-        >
-          {
-            _.map(groups, (groupCur, groupIdx) => {
-              const { hidden, header } = groupCur.group.props;
-              const groupOuterStyle = _.assign(
-                {},
-                styles.groupOuter,
-                hidden ? styles.hiddenGroupOuter : {}, {
-                  width: groupCur.groupWidth,
-                  height: groupHeaderHeight,
-                },
-              );
-              return (
-                <div
-                  key={`group_${groupIdx}`}
-                  style={groupOuterStyle}
-                >
-                  {header}
-                </div>
-              );
-            })
-          }
-        </div>
-      </div>
-    );
-  }
+    };
+  };
 
   render() {
     const {
       className,
-      children,
-      rowCount,
-      rowsCount,
-      height,
-      constrainWidth,
-      rowGetter,
-      rowHeight,
-      noHeaderScroll,
-      headerHeight,
-      selectionStyle,
-      focusStyle,
-      onCellCut,
-      onCellCopy,
-      onCellPaste,
-      style,
       evenRowBackgroundColor,
-      oddRowBackgroundColor,
+      focusStyle,
+      freezeLeftCount,
+      headerHeight,
+      height,
+      highlightRowColor,
       highlightRowKey,
       highlightRowValue,
-      highlightRowColor,
-      ...otherProps
-    } = this.props;
-    const rowCountUse = _.isNumber(rowCount) ? rowCount : rowsCount;
-    const cellGridHeight = height - (headerHeight + 2); // subtract 2 because of borders
-    const useDefaultClipboard = !(onCellCut || onCellCopy || onCellPaste);
-    let {
-      width,
-      headerStyle,
-      gridStyle,
-      scrollToRow,
-      scrollToColumn,
-      ...remainingProps // eslint-disable-line prefer-const
-    } = otherProps;
-    if (!constrainWidth) {
-      width -= 2; // due to borders
-    }
-    const { selectionRanges, arrowSelectionRange, focusedCell } = this.state;
-    const styles = this.prvGetStyles();
-    const tableStyle = (constrainWidth ?
-      _.assign(
-        {},
-        useDefaultClipboard ? styles.tableAllowSelect : styles.table, { width },
-      ) : styles.table);
-    const tableProps = {
+      noHeaderScroll,
+      oddRowBackgroundColor,
       rowHeight,
-      headerHeight,
+      rowGetter,
+      selectionStyle,
+      style,
+      ...remainingProps
+    } = this.props;
+    let { scrollToColumn, scrollToRow } = this.props;
+    const {
+      arrowSelectionRange,
+      columnLeft,
+      columnInfo,
+      focusedCell,
+      freezeWidth,
+      gridStyle,
+      groupFarOuterStyle,
+      groupHeaderStyle,
+      groupOuterStyle,
+      groups,
+      headerStyle,
+      rowCountWithEmptySpace,
+      selectionRanges,
+      tableStyle,
+      useDefaultClipboard,
       width,
-    };
-
-    // shim in some default styling
-    headerStyle = _.assign({}, styles.tableHeader, headerStyle || {});
-    gridStyle = _.assign({}, styles.tableGrid, gridStyle || {});
-
-    // ensure we will draw blank rows in the gap between height and the final renderable
-    // row by calculating the number of rows needed to fill the available space and setting
-    // the row count to that value
-    const rowCountWithEmptySpace = Math.max(
-      Math.floor((height - headerHeight) / rowHeight),
-      rowCountUse,
-    );
-
-    this.prvColumnInfo = [];
-    const columns = [];
-    const groups = [];
-    let columnLeft = 0;
-
-    // render all columns, skipping over any ColumnGroups and directly rendering their column
-    // children
-    React.Children.forEach(children, (child) => {
-      if (child) {
-        if (child.type && ((child.type === ColumnGroup) || (child.type.name === 'ColumnGroup'))) {
-          let groupWidth = 0;
-
-          React.Children.forEach(child.props.children, (grandChild) => {
-            if (grandChild) {
-              if (grandChild.type && ((grandChild.type !== Column) && (grandChild.type.name !== 'Column'))) {
-                throw new Error('unexpected child - only Columns can be children of ColumnGroups!');
-              }
-
-              columns.push(this.prvRenderTableColumn({
-                tableProps,
-                styles,
-                column: grandChild,
-                columnLeft,
-              }));
-
-              groupWidth += grandChild.props.width || 0;
-              columnLeft += grandChild.props.width || 0;
-
-              this.prvColumnInfo.push({
-                columnKey: grandChild.props.columnKey,
-                width: grandChild.props.width || 0,
-              });
-            }
-          });
-
-          groups.push({
-            group: child,
-            groupWidth,
-          });
-        } else if (child.type && ((child.type === Column) || (child.type.name === 'Column'))) {
-          columns.push(this.prvRenderTableColumn({
-            tableProps,
-            styles,
-            column: child,
-            columnLeft,
-          }));
-
-          columnLeft += child.props.width || 0;
-
-          this.prvColumnInfo.push({
-            columnKey: child.props.columnKey,
-            width: child.props.width || 0,
-          });
-        } else {
-          throw new Error('unexpected child - only Columns or ColumnGroups can be children of VirtualizedDataTable!');
-        }
-      }
-    });
+    } = this.state;
+    const cellGridHeight = height - (headerHeight + 2); // subtract 2 because of borders
+    const columns = columnInfo.map(columnInfoCur => this.prvRenderTableColumn(columnInfoCur));
 
     // this function is local to the render function so we can use the values computed above
     // in a closure
-    const cellRenderer = forHeader => (props) => {
+    const cellRenderer = (forHeader, forFreeze) => (props) => {
       const { rowIndex, columnIndex } = props; // eslint-disable-line react/prop-types
+      const columnIndexUse = forFreeze ? columnIndex : columnIndex + freezeLeftCount;
       const rowData = rowGetter({ index: rowIndex });
-      const columnProps = columns[columnIndex];
+      const columnProps = columns[columnIndexUse];
 
-      const propsUse = _.assign({}, props, {
+      const propsUse = {
+        ...props,
         rowData,
         rowIndex,
         columnKey: columnProps.columnKey,
-      });
+      };
 
       const rendererFunc = forHeader ? columnProps.headerRenderer : columnProps.cellRenderer;
       const mergedSelections = arrowSelectionRange ?
         selectionRanges.push(arrowSelectionRange) : selectionRanges;
       const cellIsSelected = mergedSelections.reduce((cellIsSelectedRet, rangeCur) => (
         cellIsSelectedRet ||
-        ((rangeCur.get(COLUMN_START) <= columnIndex) &&
-        (rangeCur.get(COLUMN_END) >= columnIndex) &&
+        ((rangeCur.get(COLUMN_START) <= columnIndexUse) &&
+        (rangeCur.get(COLUMN_END) >= columnIndexUse) &&
         (rangeCur.get(ROW_START) <= rowIndex) &&
         (rangeCur.get(ROW_END) >= rowIndex))
       ), false);
       const cellIsFocused = !forHeader &&
         (focusedCell.rowIndex === rowIndex) &&
-        (focusedCell.columnIndex === columnIndex);
+        (focusedCell.columnIndex === columnIndexUse);
       let cellBackground = (rowIndex % 2) ?
-        (evenRowBackgroundColor || styles.evenRows.background) :
-        (oddRowBackgroundColor || styles.oddRows.background);
+        (evenRowBackgroundColor || STYLES.evenRows.background) :
+        (oddRowBackgroundColor || STYLES.oddRows.background);
       if (highlightRowKey && highlightRowValue) {
         const highlightKeyVal = (
           rowData.get ? rowData.get(highlightRowKey) : rowData[highlightRowKey]
@@ -1407,18 +1590,16 @@ class VirtualizedDataTable extends Component {
           cellBackground = highlightRowColor || DEFAULT_HIGHLIGHT_ROW_COLOR;
         }
       }
-      const cellOuterStyle = _.assign(
-        {},
-        propsUse.style,
-        forHeader ? headerStyle : gridStyle, {
-          background: cellBackground,
-        },
-        cellIsSelected ? (selectionStyle || {}) : {},
-        cellIsFocused ? (focusStyle || {}) : {},
-      );
+      const cellOuterStyle = {
+        ...propsUse.style,
+        ...(forHeader ? headerStyle : gridStyle),
+        background: cellBackground,
+        ...((cellIsSelected && selectionStyle) || {}),
+        ...((cellIsFocused && focusStyle) || {}),
+      };
       const eventParams = {
         rowIndex,
-        columnIndex,
+        columnIndex: columnIndexUse,
         columnKey: columnProps.columnKey,
         columnCount: columns.length,
         rowData,
@@ -1460,101 +1641,161 @@ class VirtualizedDataTable extends Component {
       }
     }
 
-    const keysToSniff = [
-      'ArrowLeft',
-      'ArrowRight',
-      'ArrowUp',
-      'ArrowDown',
-      'Backquote',
-      'Backslash',
-      'Backspace',
-      'BracketLeft',
-      'BracketRight',
-      'Comma',
-      'Delete',
-      'Enter',
-      'Equal',
-      'Escape',
-      'Minus',
-      'Period',
-      'Quote',
-      'Semicolon',
-      'Slash',
-      'Space',
-      'Tab',
-    ];
-    for (let keyOn = 0; keyOn < 10; keyOn += 1) {
-      keysToSniff.push(`Digit${keyOn}`);
+    if (scrollToColumn > -1 && freezeLeftCount) {
+      if (scrollToColumn < freezeLeftCount) {
+        scrollToColumn = -1;
+      } else {
+        scrollToColumn -= freezeLeftCount;
+      }
     }
-    for (let keyOn = 48; keyOn < 91; keyOn += 1) {
-      keysToSniff.push(`Key${String.fromCharCode(keyOn)}`);
-    }
-
-    const clipboardHelper = !useDefaultClipboard ? (
-      <ClipboardHelper
-        onCut={this.prvHandleCutOrCopy(true /* isCut */)}
-        onCopy={this.prvHandleCutOrCopy(false /* isCut */)}
-        onPaste={this.prvHandlePaste}
-        getInputRef={() => this.prvCellGrid}
-        allowInputCutCopy={false}
-        allowEditableCutCopy={false}
-        allowInputPaste={false}
-        allowEditablePaste={false}
-      />
-    ) : null;
 
     return (
       <div
         className={className}
-        style={_.assign({}, styles.outerDiv, style)}
+        style={{
+          ...STYLES.outerDiv,
+          ...style,
+        }}
       >
-        {clipboardHelper}
+        {renderIf(!useDefaultClipboard, () => (
+          <Fragment>
+            <ClipboardHelper
+              onCut={this.prvHandleCutOrCopy(true /* isCut */)}
+              onCopy={this.prvHandleCutOrCopy(false /* isCut */)}
+              onPaste={this.prvHandlePaste}
+              getInputRef={() => this.prvCellGridRef}
+              allowInputCutCopy={false}
+              allowEditableCutCopy={false}
+              allowInputPaste={false}
+              allowEditablePaste={false}
+            />
+            {renderIf(freezeLeftCount, () => (
+              <ClipboardHelper
+                onCut={this.prvHandleCutOrCopy(true /* isCut */)}
+                onCopy={this.prvHandleCutOrCopy(false /* isCut */)}
+                onPaste={this.prvHandlePaste}
+                getInputRef={() => this.prvCellGridFreezeRef}
+                allowInputCutCopy={false}
+                allowEditableCutCopy={false}
+                allowInputPaste={false}
+                allowEditablePaste={false}
+              />
+            ))}
+          </Fragment>
+        ))}
         <KeyHandler
-          keys={keysToSniff}
+          keys={KEYS_TO_SNIFF}
           onKey={this.prvHandleKeyPress}
-          getInputRef={() => this.prvCellGrid}
+          getInputRef={() => [this.prvCellGridRef, this.prvCellGridFreezeRef]}
         />
-        {this.prvRenderGroupHeaders({ width, styles, groups })}
+        {renderIf(groups.length, () => (
+          <div style={groupFarOuterStyle}>
+            <div
+              ref={(groupHeader) => { this.prvGroupHeaderRef = groupHeader; }}
+              style={groupHeaderStyle}
+            >
+              {groups.map((groupCur) => {
+                const { group: { props: groupProps } } = groupCur;
+                const { key, hidden, header } = groupProps;
+                return (
+                  <div
+                    key={`group_${key}`}
+                    style={{
+                      ...groupOuterStyle,
+                      ...(hidden ? STYLES.hiddenGroupOuter : {}),
+                      width: groupCur.groupWidth,
+                    }}
+                  >
+                    {header}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
         <div
-          style={_.assign({}, styles.headerDiv, {
+          style={{
+            ...STYLES.headerDiv,
             width,
             overflowY: noHeaderScroll ? 'hidden' : 'scroll',
-          })}
+          }}
         >
+          {renderIf(freezeLeftCount, () => (
+            <Grid
+              {...remainingProps}
+              ref={(grid) => { this.prvHookRef(grid, 'prvHeaderGridFreezeRef'); }}
+              style={{
+                ...tableStyle,
+                ...STYLES.headerTable,
+                width: freezeWidth,
+                zIndex: 1,
+              }}
+              gridStyle={gridStyle}
+              height={headerHeight}
+              // at this point, columnLeft is the native width of all columns
+              width={freezeWidth}
+              rowCount={1}
+              rowHeight={headerHeight}
+              columnCount={freezeLeftCount}
+              columnWidth={({ index }) => columns[index].width}
+              cellRenderer={cellRenderer(true /* forHeader */, true /* forFreeze */)}
+            />
+          ))}
           <Grid
             {...remainingProps}
-            ref={(grid) => { this.prvHeaderGrid = grid; }}
-            style={_.assign({}, tableStyle, styles.headerTable, {
+            ref={(grid) => { this.prvHookRef(grid, 'prvHeaderGridRef'); }}
+            style={{
+              ...tableStyle,
+              ...STYLES.headerTable,
+              overflow: 'initial',
               width: Math.max(width, columnLeft),
-            })}
+              flex: 1,
+            }}
             gridStyle={gridStyle}
             height={headerHeight}
             // at this point, columnLeft is the native width of all columns
-            width={Math.max(width, columnLeft)}
+            width={Math.max(width, columnLeft) - freezeWidth}
             rowCount={1}
             rowHeight={headerHeight}
-            columnCount={columns.length}
-            columnWidth={({ index }) => columns[index].width}
-            cellRenderer={cellRenderer(true /* forHeader */)}
+            columnCount={columns.length - freezeLeftCount}
+            columnWidth={({ index }) => columns[index + freezeLeftCount].width}
+            cellRenderer={cellRenderer(true /* forHeader */, false /* forFreeze */)}
           />
         </div>
         <div
-          style={_.assign({}, styles.tableDiv, {
+          style={{
+            ...STYLES.tableDiv,
             width,
-          })}
+          }}
         >
+          {renderIf(freezeLeftCount, () => (
+            <Grid
+              {...remainingProps}
+              ref={(grid) => { this.prvHookRef(grid, 'prvCellGridFreezeRef'); }}
+              style={tableStyle}
+              gridStyle={gridStyle}
+              height={cellGridHeight}
+              width={freezeWidth}
+              rowCount={rowCountWithEmptySpace}
+              rowHeight={rowHeight}
+              columnCount={freezeLeftCount}
+              columnWidth={({ index }) => columns[index].width}
+              cellRenderer={cellRenderer(false /* forHeader */, true /* forFreeze */)}
+              scrollToRow={scrollToRow}
+            />
+          ))}
           <Grid
             {...remainingProps}
-            ref={(grid) => { this.prvCellGrid = grid; }}
+            ref={(grid) => { this.prvHookGridRef(grid); }}
             style={tableStyle}
             gridStyle={gridStyle}
             height={cellGridHeight}
-            width={width}
+            width={width - freezeWidth}
             rowCount={rowCountWithEmptySpace}
             rowHeight={rowHeight}
-            columnCount={columns.length}
-            columnWidth={({ index }) => columns[index].width}
-            cellRenderer={cellRenderer(false /* forHeader */)}
+            columnCount={columns.length - freezeLeftCount}
+            columnWidth={({ index }) => columns[index + freezeLeftCount].width}
+            cellRenderer={cellRenderer(false /* forHeader */, false /* forFreeze */)}
             scrollToRow={scrollToRow}
             scrollToColumn={scrollToColumn}
             onScroll={this.prvHandleScroll}
@@ -1566,54 +1807,5 @@ class VirtualizedDataTable extends Component {
 
   /* ------ End Rendering Methods ------ */
 }
-
-VirtualizedDataTable.propTypes = {
-  className: PropTypes.string,
-  children: PropTypes.oneOfType([ // from react
-    PropTypes.arrayOf(PropTypes.node),
-    PropTypes.node,
-  ]),
-  rowCount: PropTypes.number,
-  rowsCount: PropTypes.number,
-  rowGetter: PropTypes.func.isRequired,
-  height: PropTypes.number.isRequired,
-  width: PropTypes.number.isRequired,
-  style: PropTypes.object, // eslint-disable-line react/forbid-prop-types
-  rowHeight: PropTypes.number.isRequired,
-  headerHeight: PropTypes.number.isRequired,
-  groupHeaderHeight: PropTypes.number,
-  onColumnResizeEndCallback: PropTypes.func,
-  constrainWidth: PropTypes.bool,
-  noHeaderScroll: PropTypes.bool,
-  allowRowSelect: PropTypes.bool,
-  allowMultiSelect: PropTypes.bool,
-  allowRangeSelect: PropTypes.bool,
-  selectionStyle: PropTypes.object, // eslint-disable-line react/forbid-prop-types
-  focusStyle: PropTypes.object, // eslint-disable-line react/forbid-prop-types
-  canSelectColumn: PropTypes.func,
-  canSelectRow: PropTypes.func,
-  onSelectionChange: PropTypes.func,
-  onCellClick: PropTypes.func,
-  onCellDoubleClick: PropTypes.func,
-  onCellHover: PropTypes.func,
-  onCellFocus: PropTypes.func,
-  onCellCut: PropTypes.func,
-  onCellCopy: PropTypes.func,
-  onCellPaste: PropTypes.func,
-  shouldHandleKeyEvent: PropTypes.func,
-  performingBulkUpdate: PropTypes.number,
-  evenRowBackgroundColor: PropTypes.string,
-  oddRowBackgroundColor: PropTypes.string,
-  highlightRowValue: PropTypes.any, // eslint-disable-line react/forbid-prop-types
-  highlightRowKey: PropTypes.string,
-  highlightRowColor: PropTypes.string,
-  // below properties not actually used by VirtualizedDataTable, but linter is confused
-  cellRenderer: PropTypes.func,
-  columnWidth: PropTypes.number,
-};
-
-VirtualizedDataTable.propTypes = _.assign({}, _.omit(Grid.propTypes, ['columnCount']), VirtualizedDataTable.propTypes);
-
-VirtualizedDataTable.defaultProps = Grid.defaultProps;
 
 export default VirtualizedDataTable;

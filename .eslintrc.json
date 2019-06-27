@@ -1,8 +1,18 @@
 {
     "extends": "airbnb",
+    "parser": "babel-eslint",
+    "plugins": [
+        "babel",
+        "react-hooks"
+    ],
     "globals": {
         "document": true,
         "navigator": true,
         "window": true
+    },
+    "rules": {
+        "implicit-arrow-linebreak": "off",
+        "operator-linebreak": "off",
+        "react/require-default-props": "off"
     }
 }

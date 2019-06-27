@@ -1,16 +1,22 @@
 import { Component } from 'react';
 import PropTypes from 'prop-types';
+import _isArray from 'lodash/isArray';
 import ReactDOM from 'react-dom';
 import { isInput, isMac } from './utils';
 
 // this is a component which can grab keyup events and send them to the parent component
 // via an onKey event
 class KeyHandler extends Component {
-  constructor(props, context) {
-    super(props, context);
+  static propTypes = {
+    keys: PropTypes.arrayOf(PropTypes.string),
+    onKey: PropTypes.func.isRequired,
+    ignoreInput: PropTypes.bool,
+    getInputRef: PropTypes.func,
+  };
 
-    this.prvHandleKey = this.prvHandleKey.bind(this);
-  }
+  static defaultProps = {
+    ignoreInput: false,
+  };
 
   /* ------ Lifecycle Methods ------ */
 
@@ -30,24 +36,34 @@ class KeyHandler extends Component {
 
   /* ------ Event Handlers ------ */
 
-  prvEventTargetIsRefDescendant(evt) {
+  prvEventTargetIsRefDescendant = (evt) => {
     const { getInputRef } = this.props;
     if (getInputRef) {
-      const refNode = ReactDOM.findDOMNode(getInputRef()); // eslint-disable-line max-len, react/no-find-dom-node
-      let node = evt.target;
-      let isDescendant = false;
-      do {
-        if (node === refNode) {
-          isDescendant = true;
+      let inputRef = getInputRef();
+      if (!_isArray(inputRef)) {
+        inputRef = [inputRef];
+      }
+      return inputRef.reduce((isDescendant, refCur) => {
+        if (!isDescendant) {
+          // eslint-disable-next-line react/no-find-dom-node
+          const refNode = ReactDOM.findDOMNode(refCur);
+          if (refNode) {
+            let node = evt.target;
+            do {
+              if (node === refNode) {
+                return true;
+              }
+              node = node.parentNode;
+            } while (node);
+          }
         }
-        node = node.parentNode;
-      } while (node && !isDescendant);
-      return isDescendant;
+        return isDescendant;
+      }, false);
     }
     return true;
-  }
+  };
 
-  prvHandleKey(evt) {
+  prvHandleKey = (evt) => {
     const { ignoreInput, keys, onKey } = this.props;
     const { metaKey, ctrlKey, which } = evt;
 
@@ -69,7 +85,7 @@ class KeyHandler extends Component {
     if ((shouldHandleKey && keyNotInInput && targetInTable) || (which === 13)) {
       onKey(evt);
     }
-  }
+  };
 
   /* ------ END Event Handlers ------ */
 
@@ -81,18 +97,5 @@ class KeyHandler extends Component {
 
   /* ------ End Rendering methods ------ */
 }
-
-KeyHandler.propTypes = {
-  keys: PropTypes.arrayOf(PropTypes.string),
-  onKey: PropTypes.func.isRequired,
-  ignoreInput: PropTypes.bool,
-  getInputRef: PropTypes.func,
-};
-
-KeyHandler.defaultProps = {
-  keys: undefined,
-  ignoreInput: false,
-  getInputRef: undefined,
-};
 
 export default KeyHandler;
