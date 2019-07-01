@@ -5,13 +5,27 @@ import { isInput } from './utils';
 
 // this is a non-rendering component which can subscribe to copy/paste messages
 class ClipboardHelper extends Component {
-  constructor(props, context) {
-    super(props, context);
+  static propTypes = {
+    onCut: PropTypes.func,
+    onCopy: PropTypes.func,
+    onPaste: PropTypes.func,
+    getInputRef: PropTypes.func,
+    allowInputCutCopy: PropTypes.bool,
+    allowEditableCutCopy: PropTypes.bool,
+    allowInputPaste: PropTypes.bool,
+    allowEditablePaste: PropTypes.bool,
+    pushBulkUpdate: PropTypes.func,
+    popBulkUpdate: PropTypes.func,
+  };
 
-    this.prvHandleCut = this.prvHandleCut.bind(this);
-    this.prvHandleCopy = this.prvHandleCopy.bind(this);
-    this.prvHandlePaste = this.prvHandlePaste.bind(this);
-  }
+  static defaultProps = {
+    allowInputCutCopy: true,
+    allowEditableCutCopy: true,
+    allowInputPaste: true,
+    allowEditablePaste: true,
+    pushBulkUpdate: () => {},
+    popBulkUpdate: () => {},
+  };
 
   /* ------ Lifecycle Methods ------ */
 
@@ -35,7 +49,7 @@ class ClipboardHelper extends Component {
 
   /* ------ Event Handlers ------ */
 
-  prvEventTargetIsAllowedInput(evt, isCutCopy) {
+  prvEventTargetIsAllowedInput = (evt, isCutCopy) => {
     const {
       allowInputCutCopy,
       allowEditableCutCopy,
@@ -45,9 +59,9 @@ class ClipboardHelper extends Component {
     const allowInput = (isCutCopy ? allowInputCutCopy : allowInputPaste);
     const allowEditable = (isCutCopy ? allowEditableCutCopy : allowEditablePaste);
     return allowInput || !isInput(evt.target, allowEditable);
-  }
+  };
 
-  prvEventTargetIsRefDescendant(evt, isCutCopy) {
+  prvEventTargetIsRefDescendant = (evt, isCutCopy) => {
     const {
       getInputRef,
       allowEditableCutCopy,
@@ -69,32 +83,32 @@ class ClipboardHelper extends Component {
         !isInput(evt.target, allowEditable);
     }
     return true;
-  }
+  };
 
-  prvHandleCut(evt) {
+  prvHandleCut = (evt) => {
     const { onCut, pushBulkUpdate, popBulkUpdate } = this.props;
     if (onCut && this.prvEventTargetIsRefDescendant(evt, true /* isCutCopy */)) {
       pushBulkUpdate();
       onCut(evt);
       popBulkUpdate();
     }
-  }
+  };
 
-  prvHandleCopy(evt) {
+  prvHandleCopy = (evt) => {
     const { onCopy } = this.props;
     if (onCopy && this.prvEventTargetIsRefDescendant(evt, true /* isCutCopy */)) {
       onCopy(evt);
     }
-  }
+  };
 
-  prvHandlePaste(evt) {
+  prvHandlePaste = (evt) => {
     const { onPaste, pushBulkUpdate, popBulkUpdate } = this.props;
     if (onPaste) {
       pushBulkUpdate();
       onPaste(evt, this.prvEventTargetIsRefDescendant(evt, false /* isCutCopy */));
       popBulkUpdate();
     }
-  }
+  };
 
   /* ------ END Event Handlers ------ */
 
@@ -106,31 +120,5 @@ class ClipboardHelper extends Component {
 
   /* ------ End Rendering methods ------ */
 }
-
-ClipboardHelper.propTypes = {
-  onCut: PropTypes.func,
-  onCopy: PropTypes.func,
-  onPaste: PropTypes.func,
-  getInputRef: PropTypes.func,
-  allowInputCutCopy: PropTypes.bool,
-  allowEditableCutCopy: PropTypes.bool,
-  allowInputPaste: PropTypes.bool,
-  allowEditablePaste: PropTypes.bool,
-  pushBulkUpdate: PropTypes.func,
-  popBulkUpdate: PropTypes.func,
-};
-
-ClipboardHelper.defaultProps = {
-  onCut: undefined,
-  onCopy: undefined,
-  onPaste: undefined,
-  getInputRef: undefined,
-  allowInputCutCopy: true,
-  allowEditableCutCopy: true,
-  allowInputPaste: true,
-  allowEditablePaste: true,
-  pushBulkUpdate: () => {},
-  popBulkUpdate: () => {},
-};
 
 export default ClipboardHelper;

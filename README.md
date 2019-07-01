@@ -87,6 +87,7 @@ Some features were implemented beyond those which were supported by fixed-data-t
 2) Row/column selectability
 3) Group headers (another header that can span multiple columns)
 4) Copy/paste support (Google sheets-esque)
+5) Ability to freeze lefthand columns and scroll other columns
 
 <h2>Maintainers</h2>
 

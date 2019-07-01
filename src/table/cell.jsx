@@ -1,21 +1,40 @@
-import React, { Component } from 'react';
+/* eslint react/require-render-return: "off" */
+import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
-import _ from 'lodash';
+import _isFunction from 'lodash/isFunction';
+import renderIf from '../utils/renderIf';
 
 const MOUNT_RENDER_DELAY_MSEC = 50;
 
-class Cell extends Component {
-  constructor(...args) {
-    super(...args);
+class Cell extends PureComponent {
+  static propTypes = {
+    allowOverflow: PropTypes.bool,
+    children: PropTypes.oneOfType([ // from react
+      PropTypes.arrayOf(PropTypes.node),
+      PropTypes.node,
+    ]),
+    className: PropTypes.string,
+    mountRenderDelay: PropTypes.number,
+    onClick: PropTypes.func,
+    onMouseEnter: PropTypes.func,
+    onMouseLeave: PropTypes.func,
+    style: PropTypes.oneOfType([
+      PropTypes.object, // eslint-disable-line react/forbid-prop-types
+      PropTypes.func,
+    ]),
+    // properties below this line from react-virtualized
+    rowData: PropTypes.object, // eslint-disable-line react/forbid-prop-types
+    rowIndex: PropTypes.number,
+    columnKey: PropTypes.string,
+  };
 
-    this.state = {
-      mounted: false,
-    };
+  static defaultProps = {
+    mountRenderDelay: MOUNT_RENDER_DELAY_MSEC,
+  };
 
-    this.handleMouseEnter = this.handleMouseEnter.bind(this);
-    this.handleMouseLeave = this.handleMouseLeave.bind(this);
-    this.handleClick = this.handleClick.bind(this);
-  }
+  state = {
+    mounted: false,
+  };
 
   componentDidMount() {
     this.prvStartMountTimer();
@@ -31,7 +50,7 @@ class Cell extends Component {
     });
   }
 
-  handleMouseEnter(e) {
+  handleMouseEnter = (evt) => {
     const {
       rowData,
       rowIndex,
@@ -39,11 +58,11 @@ class Cell extends Component {
       onMouseEnter,
     } = this.props;
     if (onMouseEnter) {
-      onMouseEnter(e, rowData, rowIndex, columnKey);
+      onMouseEnter(evt, rowData, rowIndex, columnKey);
     }
-  }
+  };
 
-  handleMouseLeave(e) {
+  handleMouseLeave = (evt) => {
     const {
       rowData,
       rowIndex,
@@ -51,11 +70,11 @@ class Cell extends Component {
       onMouseLeave,
     } = this.props;
     if (onMouseLeave) {
-      onMouseLeave(e, rowData, rowIndex, columnKey);
+      onMouseLeave(evt, rowData, rowIndex, columnKey);
     }
-  }
+  };
 
-  handleClick(e) {
+  handleClick = (evt) => {
     const {
       rowData,
       rowIndex,
@@ -63,11 +82,11 @@ class Cell extends Component {
       onClick,
     } = this.props;
     if (onClick) {
-      onClick(e, rowData, rowIndex, columnKey);
+      onClick(evt, rowData, rowIndex, columnKey);
     }
-  }
+  };
 
-  prvStartMountTimer() {
+  prvStartMountTimer = () => {
     const { mountRenderDelay } = this.props;
     const { mounted } = this.state;
     if (!mounted) {
@@ -80,14 +99,9 @@ class Cell extends Component {
         });
       }, mountRenderDelay);
     }
-  }
+  };
 
   render() {
-    const { mounted } = this.state;
-    if (!mounted) {
-      return <div role="gridcell" />;
-    }
-
     const {
       children,
       rowData,
@@ -97,16 +111,17 @@ class Cell extends Component {
       allowOverflow,
       className,
     } = this.props;
-    let cellStyle = _.assign({}, {
+    const { mounted } = this.state;
+    const cellStyle = {
       paddingLeft: 10,
-    }, allowOverflow ? {} : {
-      overflow: 'hidden',
-    }, _.isFunction(style) ? style(rowData, rowIndex, columnKey) : style);
-    cellStyle = _.assign({}, { width: '100%' }, cellStyle);
+      width: '100%',
+      overflow: allowOverflow ? undefined : 'hidden',
+      ...(_isFunction(style) ? style(rowData, rowIndex, columnKey) : style),
+    };
 
     this.prvStartMountTimer();
 
-    return (
+    return renderIf(mounted, () => (
       <div // eslint-disable-line max-len,jsx-a11y/click-events-have-key-events, jsx-a11y/interactive-supports-focus
         className={className}
         style={cellStyle}
@@ -117,39 +132,10 @@ class Cell extends Component {
       >
         {children}
       </div>
-    );
+    ), (
+      <div role="gridcell" />
+    ));
   }
 }
-
-Cell.propTypes = {
-  rowData: PropTypes.any, // eslint-disable-line react/forbid-prop-types
-  rowIndex: PropTypes.number, // from react-virtualized
-  columnKey: PropTypes.string, // from react-virtualized
-  allowOverflow: PropTypes.bool,
-  onClick: PropTypes.func,
-  onMouseEnter: PropTypes.func,
-  onMouseLeave: PropTypes.func,
-  style: PropTypes.oneOfType([
-    PropTypes.object, // eslint-disable-line react/forbid-prop-types
-    PropTypes.func,
-  ]),
-  className: PropTypes.string,
-  children: PropTypes.node, // from React
-  mountRenderDelay: PropTypes.number,
-};
-
-Cell.defaultProps = {
-  rowData: undefined,
-  rowIndex: undefined,
-  columnKey: undefined,
-  allowOverflow: undefined,
-  onClick: undefined,
-  onMouseEnter: undefined,
-  onMouseLeave: undefined,
-  style: undefined,
-  className: undefined,
-  children: undefined,
-  mountRenderDelay: MOUNT_RENDER_DELAY_MSEC,
-};
 
 export default Cell;
