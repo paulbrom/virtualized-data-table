@@ -521,14 +521,19 @@ class VirtualizedDataTable extends Component {
     if (this.prvCellGridDOM) {
       evt.preventDefault();
 
+      const { deltaX, deltaY } = evt;
       const { wheelDelta } = this.props;
-      const { state: { scrollTop, scrollLeft } } = this.prvCellGridRef;
-      const delta = evt.deltaY || evt.detail || evt.wheelDelta;
-      const newScrollTop = Math.max(0, scrollTop + ((delta > 0) ? wheelDelta : -wheelDelta));
+      const { state: { scrollLeft, scrollTop } } = this.prvCellGridRef;
+
+      const deltaYUse = (deltaX ? deltaY : ((deltaY > 0) ? wheelDelta : -wheelDelta));
+      const newScrollLeft = Math.max(0, scrollLeft - deltaX);
+      const newScrollTop = Math.max(0, scrollTop + deltaYUse);
+
+      this.prvCellGridDOM.scrollLeft = newScrollLeft;
       this.prvCellGridDOM.scrollTop = newScrollTop;
 
       this.prvCellGridRef.handleScrollEvent({
-        scrollLeft,
+        scrollLeft: newScrollLeft,
         scrollTop: newScrollTop,
       });
     }

@@ -35493,16 +35493,20 @@ function (_Component) {
     _defineProperty(_assertThisInitialized(_this), "prvHandleWheel", function (evt) {
       if (_this.prvCellGridDOM) {
         evt.preventDefault();
+        var deltaX = evt.deltaX,
+            deltaY = evt.deltaY;
         var wheelDelta = _this.props.wheelDelta;
         var _this$prvCellGridRef$ = _this.prvCellGridRef.state,
-            scrollTop = _this$prvCellGridRef$.scrollTop,
-            scrollLeft = _this$prvCellGridRef$.scrollLeft;
-        var delta = evt.deltaY || evt.detail || evt.wheelDelta;
-        var newScrollTop = Math.max(0, scrollTop + (delta > 0 ? wheelDelta : -wheelDelta));
+            scrollLeft = _this$prvCellGridRef$.scrollLeft,
+            scrollTop = _this$prvCellGridRef$.scrollTop;
+        var deltaYUse = deltaX ? deltaY : deltaY > 0 ? wheelDelta : -wheelDelta;
+        var newScrollLeft = Math.max(0, scrollLeft - deltaX);
+        var newScrollTop = Math.max(0, scrollTop + deltaYUse);
+        _this.prvCellGridDOM.scrollLeft = newScrollLeft;
         _this.prvCellGridDOM.scrollTop = newScrollTop;
 
         _this.prvCellGridRef.handleScrollEvent({
-          scrollLeft: scrollLeft,
+          scrollLeft: newScrollLeft,
           scrollTop: newScrollTop
         });
       }
