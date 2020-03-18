@@ -434,6 +434,15 @@ class VirtualizedDataTable extends Component {
 
   componentWillUnmount() {
     this.prvHookGridRef();
+
+    this.prvCellRefs = {};
+    this.prvDragRefs = {};
+    this.prvCellGridRef = null;
+    this.prvCellGridDOM = null;
+    this.prvCellGridFreezeRef = null;
+    this.prvGroupHeaderRef = null;
+    this.prvHeaderGridRef = null;
+    this.prvHeaderGridFreezeRef = null;
   }
 
   /* ------ END Lifecycle Methods ------ */
@@ -526,7 +535,7 @@ class VirtualizedDataTable extends Component {
       const { state: { scrollLeft, scrollTop } } = this.prvCellGridRef;
 
       const deltaYUse = (deltaX ? deltaY : ((deltaY > 0) ? wheelDelta : -wheelDelta));
-      const newScrollLeft = Math.max(0, scrollLeft - deltaX);
+      const newScrollLeft = Math.max(0, scrollLeft + deltaX);
       const newScrollTop = Math.max(0, scrollTop + deltaYUse);
 
       this.prvCellGridDOM.scrollLeft = newScrollLeft;
